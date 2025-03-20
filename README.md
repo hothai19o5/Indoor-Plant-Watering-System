@@ -36,6 +36,13 @@ FirebaseAuth firebaseAuth;
 unsigned long lastCommandCheck = 0;  // Thời điểm kiểm tra lệnh cuối cùng
 const long commandCheckInterval = 1000;  // Kiểm tra lệnh mỗi 1 giây
 
+// Biến trạng thái cho máy bơm và cờ ghi đè thủ công
+bool pumpOn = false;
+bool resetOn = false;
+bool manualOverride = false;
+unsigned long pumpStartTime = 0;  // Lưu thời điểm bắt đầu bật bơm
+const unsigned long pumpDuration = 10000;  // Thời gian chạy máy bơm (10 giây)
+
 // Hàm kết nối WiFi
 void setup_wifi() {
   delay(1000);
@@ -105,6 +112,13 @@ void loop() {
     setup_wifi();
   }
 
+  if (currentMillis - lastCommandCheck >= commandCheckInterval) {
+    lastCommandCheck = currentMillis;
+    checkCommands();
+  }
+
+  checkPump();  // Kiểm tra trạng thái máy bơm và tắt nếu quá thời gian
+
   // Kiểm tra commands từ Firebase mỗi 1 giây
   if (currentMillis - lastCommandCheck >= commandCheckInterval) {
     lastCommandCheck = currentMillis;
@@ -122,18 +136,13 @@ void loop() {
   float percentSoilMoisture = 100 - map(soilMoisture, 350, 1024, 0, 100);
 
   // Kiểm tra nếu cảm biến lỗi
-  if (isnan(temperature) || isnan(humidity)) {
-    Serial.println("DHT22 ERROR!!!");
+  if (isnan(temperature) || isnan(humidity) || soilMoisture <= 20 || soilMoisture >= 1023) {
+    Serial.println("Sensor ERROR!!!");
     digitalWrite(LED_DEBUG_PIN, HIGH);      // Bật led debug
     delay(1000);
     return;
   }
-  if (soilMoisture <= 20 || soilMoisture >= 1023) {
-    Serial.println("V1.2 ERROR!!!");
-    digitalWrite(LED_DEBUG_PIN, HIGH);      // Bật led debug
-    delay(1000);
-    return;
-  }
+
   digitalWrite(LED_DEBUG_PIN, LOW);         // Tắt LED debug
   
   // In dữ liệu ra Serial Monitor
@@ -144,12 +153,16 @@ void loop() {
 
   // Logic điều khiển tưới nước tự động
   int hour = timeClient.getHours();
-  if((hour == 6 || hour == 18) && soilMoisture >= 800 && temperature <= 40) {
-    digitalWrite(RELAY2_PIN, HIGH);     // Bật máy bơm
-    Serial.println("Watering...");
-    delay(10000);                       // Tưới trong 10 giây
-    Serial.println("Finished Watering...");
-    digitalWrite(RELAY2_PIN, LOW);     // Tắt máy bơm
+  if(!manualOverride && (hour == 6 || hour == 18) && soilMoisture >= 800 && temperature <= 40) {
+    if(!pumpOn){ //Chỉ bật máy bơm nếu máy bơm đang tắt
+        pumpOn = true;
+        digitalWrite(RELAY2_PIN, HIGH);
+        Serial.println("Automatic watering started...");
+        delay(10000);
+        digitalWrite(RELAY2_PIN, LOW);
+        Serial.println("Automatic watering finished...");
+        pumpOn = false;
+      }
   }
 
   // Gửi dữ liệu lên Firebase
@@ -159,66 +172,95 @@ void loop() {
   delay(2000); // Đọc dữ liệu mỗi 2 giây
 }
 
-// Hàm kiểm tra và xử lý lệnh từ Firebase
 void checkCommands() {
-  if (Firebase.getString(cmdData, "/commands")) {
-    if (cmdData.dataAvailable()) {
-      // Lấy tất cả commands dưới dạng JSON
-      FirebaseJson *json = cmdData.jsonObjectPtr();
-      
-      if (json != NULL) {
-        size_t len = json->iteratorBegin();
-        String lastKey = "";
-        String lastCmd = "";
-        
-        // Tìm lệnh mới nhất (lệnh cuối cùng)
-        for (size_t i = 0; i < len; i++) {
-          FirebaseJson::IteratorValue value = json->valueAt(i);
-          lastKey = value.key.c_str();
-          lastCmd = value.value.c_str();
+    if (Firebase.getJSON(cmdData, "/commands")) {
+      if (cmdData.dataAvailable()) {
+        Serial.print("Received JSON: ");
+        Serial.println(cmdData.jsonString());
+
+        FirebaseJson *json = cmdData.jsonObjectPtr();
+        if (json != NULL && json->iteratorBegin() > 0) { 
+          FirebaseJsonData jsonData;
+          String firstKey;
+
+          // Lấy key đầu tiên trong JSON (chính là ID động của Firebase)
+          json->iteratorBegin();
+          int type;
+          String key, value;
+          json->iteratorGet(0, type, key, value);  // Lấy key đầu tiên
+          firstKey = key;
+          json->iteratorEnd();
+
+          Serial.print("First Key: ");
+          Serial.println(firstKey);
+
+          // Lấy giá trị "type" từ key động
+          json->get(jsonData, firstKey + "/type");
+
+          if (jsonData.success) {
+            String commandType = jsonData.stringValue;
+            Serial.print("Processing command: ");
+            Serial.println(commandType);
+
+            // Xử lý lệnh
+            if (commandType == "TURN_ON_PUMP") {
+              turnOnPump();
+            } else if (commandType == "TURN_OFF_PUMP") {
+              pumpOn = false;
+              manualOverride = true;
+              digitalWrite(RELAY2_PIN, LOW);
+              Serial.println("Pump turned OFF by app command");
+            } else if (commandType == "RESET") {
+              Serial.println("System reset by app command");
+              resetOn = true;
+            }
+
+            // Xóa lệnh sau khi xử lý
+            if (Firebase.deleteNode(cmdData, "/commands/" + firstKey)) {
+              Serial.println("Command deleted successfully.");
+            } else {
+              Serial.print("Failed to delete command: ");
+              Serial.println(cmdData.errorReason());
+            }
+            // Sau khi xóa lệnh thì mới reset
+            if(resetOn) {
+              resetOn = false;
+              ESP.restart();
+            }
+
+          } else {
+            Serial.println("Failed to get 'type' from JSON.");
+          }
+        } else {
+          Serial.println("json == NULL || json->iteratorBegin() <= 0");
         }
-        json->iteratorEnd();
-        
-        // Nếu có lệnh mới
-        if (lastCmd.length() > 0) {
-          Serial.print("Command received: ");
-          Serial.println(lastCmd);
-          
-          // Xử lý lệnh
-          if (lastCmd == "\"TURN_ON_PUMP\"") {
-            digitalWrite(RELAY2_PIN, HIGH);     // Bật máy bơm
-            Serial.println("Pump turned ON by app command");
-            delay(10000);
-            digitalWrite(RELAY2_PIN, LOW);
-          } 
-          else if (lastCmd == "\"TURN_OFF_PUMP\"") {
-            digitalWrite(RELAY2_PIN, LOW);      // Tắt máy bơm
-            Serial.println("Pump turned OFF by app command");
-          }
-          else if (lastCmd == "\"RESET\"") {
-            ESP.restart();
-            Serial.println("System reset by app command");
-          }
-          
-          // Đánh dấu lệnh đã xử lý bằng cách xóa node
-          if (lastKey.length() > 0) {
-            String path = "/commands/" + lastKey;
-            
-            // Tạo một object lệnh mới với trạng thái đã xử lý
-            FirebaseJson respJson;
-            respJson.add("command", lastCmd);
-            respJson.add("processed", true);
-            respJson.add("timestamp", timeClient.getEpochTime());
-            
-            // Cập nhật lệnh với trạng thái đã xử lý
-            Firebase.updateNode(cmdData, path, respJson);
-          }
-        }
+      } else {
+        Serial.println("cmdData.dataAvailable() = false");
       }
+    } else {
+      Serial.print("Failed to get command: ");
+      Serial.println(cmdData.errorReason());
     }
-  } else {
-    Serial.println("Failed to get command: " + cmdData.errorReason());
-  }
+}
+
+// Bật bơm không dùng delay
+void turnOnPump() {
+    if (!pumpOn) {
+      pumpOn = true;
+      manualOverride = true;
+      digitalWrite(RELAY2_PIN, HIGH);
+      pumpStartTime = millis();  // Ghi lại thời gian bật bơm
+      Serial.println("Pump turned ON");
+    }
+}
+
+// Hàm kiểm tra và tự tắt bơm sau thời gian chạy
+void checkPump() {
+    if (pumpOn && millis() - pumpStartTime >= pumpDuration) {
+      pumpOn = false;
+      digitalWrite(RELAY2_PIN, LOW);
+      Serial.println("Pump turned OFF automatically after 10s");
+    }
 }
 
 void sendDataToFirebase(float temperature, float humidity, float soilMoisture) {
