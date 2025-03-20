@@ -79,7 +79,7 @@ public class StatsActivity extends AppCompatActivity {
             case TYPE_TEMPERATURE:
                 titleTextView.setText(R.string.temperature_statistics_for_the_last_3_days);
                 if(getSupportActionBar() != null)
-                    getSupportActionBar().setTitle("Temperature statistics");
+                    getSupportActionBar().setTitle(R.string.temperature_statistics);
                 break;
             case TYPE_HUMIDITY:
                 titleTextView.setText(R.string.statistics_of_air_humidity_for_the_last_3_days);

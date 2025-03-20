@@ -133,8 +133,6 @@ public class MainActivity extends AppCompatActivity {
     private void sendCommand(String command) {
         Map<String, Object> commandMap = new HashMap<>();
         commandMap.put("type", command);
-        commandMap.put("timestamp", System.currentTimeMillis());
-        commandMap.put("processed", false);
 
         commandsRef.push().setValue(commandMap)
                 .addOnSuccessListener(aVoid -> Toast.makeText(MainActivity.this, "Đã gửi lệnh: " + command, Toast.LENGTH_SHORT).show())

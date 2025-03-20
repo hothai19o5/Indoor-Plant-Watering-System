@@ -17,4 +17,5 @@
     <string name="highest">Highest</string>
     <string name="lowest">Lowest</string>
     <string name="average">Average</string>
+    <string name="temperature_statistics">Temperature statistics</string>
 </resources>
