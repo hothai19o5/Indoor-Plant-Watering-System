@@ -20,6 +20,7 @@
 #include <NTPClient.h>
 #include <ArduinoJson.h>
 #include <FirebaseESP8266.h>  // Thư viện Firebase
+#include <WiFiManager.h>
 
 #define DHTPIN D2         // Chân kết nối DHT22
 #define DHTTYPE DHT22     // Định dạng cảm biến DHT22
@@ -33,9 +34,6 @@ DHT dht(DHTPIN, DHTTYPE);   // Khởi tạo DHT22
 WiFiUDP ntpUDP;   // Khởi tạo UDP
 
 NTPClient timeClient(ntpUDP, "pool.ntp.org", 7 * 3600, 60000);  // Khởi tạo NTP Client (GMT+7 cho Việt Nam)
-
-const char *ssid      = "B10509_2.4G";            // Tên WiFi SSID
-const char *password  = "509509509";              // Mật khẩu wifi
 
 // Cấu hình Firebase
 #define FIREBASE_HOST "projectii-fabc6-default-rtdb.asia-southeast1.firebasedatabase.app"  // URL dự án Firebase
@@ -57,27 +55,11 @@ bool manualOverride = false;
 unsigned long pumpStartTime = 0;  // Lưu thời điểm bắt đầu bật bơm
 const unsigned long pumpDuration = 10000;  // Thời gian chạy máy bơm (10 giây)
 
-// Hàm kết nối WiFi
-void setup_wifi() {
-  delay(1000);
-  Serial.println();
-  Serial.print("Connecting to ");
-  Serial.println(ssid);
-  WiFi.begin(ssid, password);
-  int countConnect = 0;   // Biến đếm số lần kết nối wifi thất bại
-  while (WiFi.status() != WL_CONNECTED) {
-    countConnect ++;
-    delay(1000);
-    Serial.print(".");
-    if(countConnect == 60) {
-      ESP.restart();  // Khởi động lại ESP nếu kết nối thất bại quá nhiều lần
-    }
-  }
-  randomSeed(micros());
-  Serial.println("");
-  Serial.println("WiFi connected");
-  Serial.println("IP address: ");
-  Serial.println(WiFi.localIP());
+void configModeCallback (WiFiManager *myWiFiManager)
+{
+  Serial.println("Entered config mode");
+  Serial.println(WiFi.softAPIP());
+  Serial.println(myWiFiManager->getConfigPortalSSID());
 }
 
 void setup() {
@@ -93,7 +75,19 @@ void setup() {
   pinMode(SOIL_PIN, INPUT);      // Thiết lập chân đọc độ ẩm đất là INPUT
   pinMode(LED_DEBUG_PIN, OUTPUT); // Thiết lập chân led debug là OUTPUT
   
-  setup_wifi();         // Kết nối tới wifi
+  //Khai báo WiFi Manager
+  WiFiManager wifiManager;
+  //Setup callback để khởi động AP với SSID "ESP+chipID"
+  wifiManager.setAPCallback(configModeCallback);
+  if (!wifiManager.autoConnect())
+  {
+    Serial.println("Failed to connect and hit timeout");
+    //Nếu kết nối thất bại thì reset
+    ESP.reset();
+    delay(1000);
+  }
+  // Thành công thì thông báo ra màn hình
+  Serial.println("Connected...");
 
   // Cấu hình FirebaseConfig và FirebaseAuth
   firebaseConfig.host = FIREBASE_HOST;
@@ -123,7 +117,8 @@ void loop() {
   // Kiểm tra kết nối WiFi
   if (WiFi.status() != WL_CONNECTED) {
     Serial.println("WiFi connection lost. Reconnecting...");
-    setup_wifi();
+    ESP.reset();
+    delay(1000);
   }
 
   if (currentMillis - lastCommandCheck >= commandCheckInterval) {
