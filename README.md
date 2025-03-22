@@ -1,4 +1,18 @@
-# ESP8266
+# INDOOR PLANT WATERING SYSTEM
+## Images
+### Android App
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/de101d36-f18c-464f-ae4b-fcc7fcc7345a" alt="" width="30%">
+  <img src="https://github.com/user-attachments/assets/d60110cc-e83a-44c0-a567-2ee4c7f92973" alt="" width="30%">
+  <img src="https://github.com/user-attachments/assets/2ee77823-2f61-4aeb-8488-93bdb725cef2" alt="" width="30%">
+</p>
+
+### Hardware module wiring diagram
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/eea64c6b-8024-4a24-aea1-fa3363c84fd9" alt="" width="90%">
+</p>
+
+## CODE ESP8266
 ```cpp
 #include <DHT.h>
 #include <ESP8266WiFi.h>
