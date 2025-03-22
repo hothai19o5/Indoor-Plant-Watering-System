@@ -16,20 +16,44 @@
         android:textSize="18sp"
         android:textStyle="bold" />
 
+    <!-- LineChart (ẩn ban đầu) -->
     <com.github.mikephil.charting.charts.LineChart
         android:id="@+id/statsChart"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:layout_marginBottom="16dp"/>
+        android:layout_marginBottom="16dp"
+        android:visibility="gone"/>
 
-    <!-- Thông tin thống kê -->
+    <!-- ProgressBar (hiển thị ban đầu) -->
+    <ProgressBar
+        android:id="@+id/loadingProgressBar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_weight="1"
+        android:backgroundTint="@color/purple_500"
+        android:visibility="visible" />
+
+    <!-- TextView "No Data" (ẩn ban đầu) -->
+    <TextView
+        android:id="@+id/noDataTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_weight="1"
+        android:text="No chart data available"
+        android:visibility="gone"/>
+
+    <!-- Thông tin thống kê (ẩn ban đầu) -->
     <androidx.cardview.widget.CardView
+        android:id="@+id/statsCardView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:cardElevation="4dp"
         app:cardCornerRadius="8dp"
-        android:layout_marginBottom="16dp">
+        android:layout_marginBottom="16dp"
+        android:visibility="gone">
 
         <LinearLayout
             android:layout_width="match_parent"

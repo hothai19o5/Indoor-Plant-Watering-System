@@ -109,14 +109,14 @@ public class FirebaseDataHelper {
         });
     }
 
-    public void getDataFromLast3Days(DataCallback<List<SensorDataRecord>> callback) {
+    public void getDataFromLast1Days(DataCallback<List<SensorDataRecord>> callback) {
         // Tính thời điểm 1 ngày trước
         Calendar calendar = Calendar.getInstance();
-        calendar.add(Calendar.DAY_OF_YEAR, -3);
-        long threeDaysAgo = calendar.getTimeInMillis()/1000;
-        Log.d("FirebaseDataHelper", "threeDaysAgo: " + threeDaysAgo);
+        calendar.add(Calendar.DAY_OF_YEAR, -1);
+        long oneDayAgo = calendar.getTimeInMillis()/1000;
+        Log.d("FirebaseDataHelper", "oneDayAgo: " + oneDayAgo);
 
-        Query query = databaseReference.orderByChild("timestamp").startAt(threeDaysAgo);
+        Query query = databaseReference.orderByChild("timestamp").startAt(oneDayAgo);
         Log.d("FirebaseDataHelper", "Query: " + query.toString());
 
         query.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -135,7 +135,7 @@ public class FirebaseDataHelper {
                     Float soilMoisture = snapshot.child("soilMoisture").getValue(Float.class);
 
                     if (timestamp != null) {
-                        record.setTimestamp(timestamp);
+                        record.setTimestamp(timestamp*1000);
                     }
                     if (temperature != null) {
                         record.setTemperature(temperature);

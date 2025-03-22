@@ -3,9 +3,13 @@ package com.example.mqtt;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+import android.widget.ProgressBar;
 import android.widget.TextView;
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
+import androidx.cardview.widget.CardView;
 
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.Legend;
@@ -37,6 +41,11 @@ public class StatsActivity extends AppCompatActivity {
     private FirebaseDataHelper firebaseDataHelper;
     private int statType;
 
+    // Thêm ProgressBar và TextView
+    private ProgressBar loadingProgressBar;
+    private TextView noDataTextView;
+    private CardView statsCardView;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -51,27 +60,27 @@ public class StatsActivity extends AppCompatActivity {
 
         // Khởi tạo các view
         chart = findViewById(R.id.statsChart);
-        Log.d("StatsActivity", "Chart initialized with ID: " + chart.getId());
         titleTextView = findViewById(R.id.statsTitleTextView);
         maxValueTextView = findViewById(R.id.maxValueTextView);
         minValueTextView = findViewById(R.id.minValueTextView);
         avgValueTextView = findViewById(R.id.avgValueTextView);
 
+        // Ánh xạ ProgressBar và TextView
+        loadingProgressBar = findViewById(R.id.loadingProgressBar);
+        noDataTextView = findViewById(R.id.noDataTextView);
+        statsCardView = findViewById(R.id.statsCardView); // Lấy CardView
+
         // Thay thế DatabaseHelper bằng FirebaseDataHelper
         firebaseDataHelper = new FirebaseDataHelper();
-        Log.d("StatsActivity", "FirebaseDataHelper initialized");
 
         // Thiết lập tiêu đề theo loại thống kê
         setupTitle();
-        Log.d("StatsActivity", "Title set up");
 
         // Cấu hình biểu đồ
         setupChart();
-        Log.d("StatsActivity", "Chart set up");
 
         // Tải dữ liệu và hiển thị
         loadAndDisplayData();
-        Log.d("StatsActivity", "Data loaded and displayed");
     }
 
     private void setupTitle() {
@@ -144,10 +153,21 @@ public class StatsActivity extends AppCompatActivity {
     }
 
     private void loadAndDisplayData() {
-        firebaseDataHelper.getDataFromLast3Days(historicalData -> {
+        // Hiển thị ProgressBar, ẩn các view khác
+        loadingProgressBar.setVisibility(View.VISIBLE);
+        chart.setVisibility(View.GONE);
+        noDataTextView.setVisibility(View.GONE);
+        statsCardView.setVisibility(View.GONE); // Ẩn CardView
+
+        firebaseDataHelper.getDataFromLast1Days(historicalData -> {
+            // Dữ liệu đã được tải xong
+            loadingProgressBar.setVisibility(View.GONE);
+
             if (historicalData == null || historicalData.isEmpty()) {
-                Log.d("StatsActivity", "No data available");
-                chart.setNoDataText(getString(R.string.no_data_for_the_last_3_days));
+                // Không có dữ liệu
+                noDataTextView.setVisibility(View.VISIBLE);
+                chart.setVisibility(View.GONE);
+                statsCardView.setVisibility(View.GONE); // Ẩn CardView
                 return;
             }
 
@@ -172,8 +192,6 @@ public class StatsActivity extends AppCompatActivity {
                         break;
                 }
 
-                Log.d("StatsActivity", "Adding entry: x=" + x + ", y=" + y);
-
                 entries.add(new Entry(x, y));
 
                 if (y > maxValue) maxValue = y;
@@ -185,7 +203,14 @@ public class StatsActivity extends AppCompatActivity {
 
             float finalMaxValue = maxValue;
             float finalMinValue = minValue;
+
+            // Cập nhật UI trên UI Thread
             runOnUiThread(() -> {
+                // Hiển thị biểu đồ và thông tin thống kê
+                chart.setVisibility(View.VISIBLE);
+                statsCardView.setVisibility(View.VISIBLE); // Hiện CardView
+                noDataTextView.setVisibility(View.GONE);
+
                 displayStatistics(finalMaxValue, finalMinValue, avgValue);
                 LineDataSet dataSet = createDataSet(entries);
                 LineData lineData = new LineData(dataSet);
