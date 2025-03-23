@@ -17,6 +17,18 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+// Add these imports for BottomNavigation
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
+
+import com.example.mqtt.fragments.HumidityFragment;
+import com.example.mqtt.fragments.PumpFragment;
+import com.example.mqtt.fragments.SettingFragment;
+import com.example.mqtt.fragments.SoilMoisFragment;
+import com.example.mqtt.fragments.TemperatureFragment;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
+
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
@@ -43,6 +55,11 @@ public class MainActivity extends AppCompatActivity {
     @SuppressLint("StaticFieldLeak")
     public static MainActivity instance;  // Không cần thiết phải có instance
 
+    private BottomNavigationView bottomNavigationView;
+
+    // Biến để theo dõi fragment hiện tại
+    private Fragment currentFragment;
+
     @SuppressLint("MissingInflatedId")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,7 +68,35 @@ public class MainActivity extends AppCompatActivity {
 
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
         EdgeToEdge.enable(this);
-        setContentView(R.layout.new_activity_main);
+        setContentView(R.layout.activity_main);
+        
+        // Initialize Bottom Navigation
+        bottomNavigationView = findViewById(R.id.bottom_navigation);
+        bottomNavigationView.setOnItemSelectedListener(item -> {
+            int itemId = item.getItemId();
+            
+            if (itemId == R.id.nav_pump) {
+                replaceFragment(new PumpFragment());
+                return true;
+            } else if (itemId == R.id.nav_temperature) {
+                replaceFragment(new TemperatureFragment());
+                return true;
+            } else if (itemId == R.id.nav_humidity) {
+                replaceFragment(new HumidityFragment());
+                return true;
+            } else if (itemId == R.id.nav_soilmoisture) {
+                replaceFragment(new SoilMoisFragment());
+                return true;
+            } else if (itemId == R.id.nav_setting) {
+                replaceFragment(new SettingFragment());
+                return true;
+            }
+            
+            return false;
+        });
+        
+        // Set default fragment
+        replaceFragment(new PumpFragment());
 
         Log.d("MainActivity", "Initializing Firebase connection");
 
@@ -85,24 +130,25 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
-        findViewById(R.id.turnOnPumpButton).setOnClickListener(v -> sendCommand("TURN_ON_PUMP"));
-        findViewById(R.id.turnOffPumpButton).setOnClickListener(v -> sendCommand("TURN_OFF_PUMP"));
-        findViewById(R.id.resetButton).setOnClickListener(v -> sendCommand("RESET"));
-        findViewById(R.id.temperatureStatsButton).setOnClickListener(v -> {
-            Intent intent = new Intent(MainActivity.this, StatsActivity.class);
-            intent.putExtra(StatsActivity.EXTRA_STAT_TYPE, StatsActivity.TYPE_TEMPERATURE);
-            startActivity(intent);
-        });
-        findViewById(R.id.humidityStatsButton).setOnClickListener(v -> {
-            Intent intent = new Intent(MainActivity.this, StatsActivity.class);
-            intent.putExtra(StatsActivity.EXTRA_STAT_TYPE, StatsActivity.TYPE_HUMIDITY);
-            startActivity(intent);
-        });
-        findViewById(R.id.soilMoistureStatsButton).setOnClickListener(v -> {
-            Intent intent = new Intent(MainActivity.this, StatsActivity.class);
-            intent.putExtra(StatsActivity.EXTRA_STAT_TYPE, StatsActivity.TYPE_SOIL_MOISTURE);
-            startActivity(intent);
-        });
+        // findViewById(R.id.turnOnPumpButton).setOnClickListener(v -> sendCommand("TURN_ON_PUMP"));
+        // findViewById(R.id.turnOffPumpButton).setOnClickListener(v -> sendCommand("TURN_OFF_PUMP"));
+        // findViewById(R.id.resetButton).setOnClickListener(v -> sendCommand("RESET"));
+        // ...các dòng khác
+//        findViewById(R.id.temperatureStatsButton).setOnClickListener(v -> {
+//            Intent intent = new Intent(MainActivity.this, StatsActivity.class);
+//            intent.putExtra(StatsActivity.EXTRA_STAT_TYPE, StatsActivity.TYPE_TEMPERATURE);
+//            startActivity(intent);
+//        });
+//        findViewById(R.id.humidityStatsButton).setOnClickListener(v -> {
+//            Intent intent = new Intent(MainActivity.this, StatsActivity.class);
+//            intent.putExtra(StatsActivity.EXTRA_STAT_TYPE, StatsActivity.TYPE_HUMIDITY);
+//            startActivity(intent);
+//        });
+//        findViewById(R.id.soilMoistureStatsButton).setOnClickListener(v -> {
+//            Intent intent = new Intent(MainActivity.this, StatsActivity.class);
+//            intent.putExtra(StatsActivity.EXTRA_STAT_TYPE, StatsActivity.TYPE_SOIL_MOISTURE);
+//            startActivity(intent);
+//        });
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
@@ -111,21 +157,21 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    public interface DataUpdateListener {
+        void onDataUpdate(SensorData sensorData);
+    }
 
     private void loadLatestDataFromFirebase() {
         Log.d("MainActivity", "Loading latest data from Firebase");
         firebaseDataHelper.getLatestData(sensorData -> { // Sử dụng lambda cho gọn
             Log.d("MainActivity", "Data callback received: " + (sensorData != null ? "data exists" : "no data"));
-            runOnUiThread(() -> { // Đưa toàn bộ vào runOnUiThread
-                if (sensorData != null) {
-                    updateUI(sensorData);
-                } else {
-                    temperatureTextView.setText("--°C");
-                    humidityTextView.setText("--%");
-                    soilMoistureTextView.setText("--%");
-                    Toast.makeText(MainActivity.this, "Không có dữ liệu cảm biến", Toast.LENGTH_SHORT).show();
-                }
-            });
+            // Không cập nhật UI trực tiếp ở đây nữa
+            // Thay vào đó, thông báo cho fragment hiện tại
+            if (currentFragment instanceof DataUpdateListener) {
+                runOnUiThread(() -> {
+                    ((DataUpdateListener)currentFragment).onDataUpdate(sensorData);
+                });
+            }
         });
     }
 
@@ -189,5 +235,13 @@ public class MainActivity extends AppCompatActivity {
             humidityTextView.setText("--%");
             soilMoistureTextView.setText("--%");
         }
+    }
+
+    private void replaceFragment(Fragment fragment) {
+        currentFragment = fragment;
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+        fragmentTransaction.replace(R.id.fragment_container, fragment);
+        fragmentTransaction.commit();
     }
 }
