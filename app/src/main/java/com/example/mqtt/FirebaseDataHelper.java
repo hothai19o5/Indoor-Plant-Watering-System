@@ -109,14 +109,14 @@ public class FirebaseDataHelper {
         });
     }
 
-    public void getDataFromLast1Days(DataCallback<List<SensorDataRecord>> callback) {
+    public void getDataFromLast1Hour(DataCallback<List<SensorDataRecord>> callback) {
         // Tính thời điểm 1 ngày trước
         Calendar calendar = Calendar.getInstance();
-        calendar.add(Calendar.DAY_OF_YEAR, -1);
-        long oneDayAgo = calendar.getTimeInMillis()/1000;
-        Log.d("FirebaseDataHelper", "oneDayAgo: " + oneDayAgo);
+        calendar.add(Calendar.DAY_OF_YEAR, 0);
+        long oneHourAgo = calendar.getTimeInMillis()/1000 - 3600;
+        Log.d("FirebaseDataHelper", "oneHourAgo: " + oneHourAgo);
 
-        Query query = databaseReference.orderByChild("timestamp").startAt(oneDayAgo);
+        Query query = databaseReference.orderByChild("timestamp").startAt(oneHourAgo);
         Log.d("FirebaseDataHelper", "Query: " + query.toString());
 
         query.addListenerForSingleValueEvent(new ValueEventListener() {

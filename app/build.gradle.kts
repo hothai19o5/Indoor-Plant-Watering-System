@@ -36,6 +36,12 @@ android {
 }
 
 dependencies {
+    // Navigation
+    implementation(libs.navigation.fragment.ktx)
+    implementation(libs.navigation.ui.ktx)
+
+    // Google Play Services
+    implementation(libs.play.services.auth)
 
     // Firebase core
     implementation(platform(libs.firebase.bom))

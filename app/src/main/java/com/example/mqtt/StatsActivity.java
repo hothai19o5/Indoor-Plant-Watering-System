@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.TimeZone;
 
 public class StatsActivity extends AppCompatActivity {
 
@@ -86,17 +87,17 @@ public class StatsActivity extends AppCompatActivity {
     private void setupTitle() {
         switch (statType) {
             case TYPE_TEMPERATURE:
-                titleTextView.setText(R.string.temperature_statistics_for_the_last_3_days);
+                titleTextView.setText(R.string.temperature_statistics_for_the_last_1_hour);
                 if(getSupportActionBar() != null)
                     getSupportActionBar().setTitle(R.string.temperature_statistics);
                 break;
             case TYPE_HUMIDITY:
-                titleTextView.setText(R.string.statistics_of_air_humidity_for_the_last_3_days);
+                titleTextView.setText(R.string.statistics_of_air_humidity_for_the_last_1_hour);
                 if(getSupportActionBar() != null)
                     getSupportActionBar().setTitle(R.string.air_humidity_statistics);
                 break;
             case TYPE_SOIL_MOISTURE:
-                titleTextView.setText(R.string.soil_moisture_statistics_for_the_last_3_days);
+                titleTextView.setText(R.string.soil_moisture_statistics_for_the_last_1_hour);
                 if(getSupportActionBar() != null)
                     getSupportActionBar().setTitle(R.string.soil_moisture_statistics);
                 break;
@@ -118,11 +119,15 @@ public class StatsActivity extends AppCompatActivity {
         xAxis.setGranularity(1f);
         xAxis.setLabelRotationAngle(45f);
         xAxis.setValueFormatter(new ValueFormatter() {
-            private final SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM HH:mm", Locale.getDefault());
+            private final SimpleDateFormat dateFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
+            {
+                // Thiết lập múi giờ UTC để không tự động chuyển đổi
+                dateFormat.setTimeZone(TimeZone.getTimeZone("UTC")); 
+            }
 
             @Override
             public String getFormattedValue(float value) {
-                long millis = (long) value;
+                long millis = (long) value;  // Chuyển giây -> mili giây
                 return dateFormat.format(new Date(millis));
             }
         });
@@ -159,7 +164,7 @@ public class StatsActivity extends AppCompatActivity {
         noDataTextView.setVisibility(View.GONE);
         statsCardView.setVisibility(View.GONE); // Ẩn CardView
 
-        firebaseDataHelper.getDataFromLast1Days(historicalData -> {
+        firebaseDataHelper.getDataFromLast1Hour(historicalData -> {
             // Dữ liệu đã được tải xong
             loadingProgressBar.setVisibility(View.GONE);
 

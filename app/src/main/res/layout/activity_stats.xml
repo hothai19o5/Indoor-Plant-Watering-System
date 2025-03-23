@@ -12,7 +12,7 @@
         android:layout_height="wrap_content"
         android:layout_marginBottom="8dp"
         android:gravity="center"
-        android:text="@string/statistics_of_the_last_3_day"
+        android:text="@string/statistics_of_the_last_1_hour"
         android:textSize="18sp"
         android:textStyle="bold" />
 
