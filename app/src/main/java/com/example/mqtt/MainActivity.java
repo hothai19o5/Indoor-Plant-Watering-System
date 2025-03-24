@@ -176,7 +176,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    private void sendCommand(String command) {
+    public void sendCommand(String command) {
         Map<String, Object> commandMap = new HashMap<>();
         commandMap.put("type", command);
 
