@@ -188,6 +188,13 @@ public class MainActivity extends AppCompatActivity {
                 });
     }
 
+    // Add method for fragments to call
+    public void navigateToLogin() {
+        Intent intent = new Intent(this, LoginActivity.class);
+        startActivity(intent);
+        finish();
+    }
+
     public void updateFromFCM(SensorData sensorData) { // Cái này bạn chưa dùng, nhưng cứ để đây
         if (sensorData != null) {
             updateUI(sensorData);
