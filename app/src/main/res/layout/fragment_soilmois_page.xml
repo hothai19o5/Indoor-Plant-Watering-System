@@ -6,16 +6,138 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/white"
+    android:padding="16dp"
     tools:context=".fragments.SoilMoisFragment">
 
-
+    <!-- Tiêu đề -->
     <TextView
+        android:id="@+id/SoilMoisStatsTitleTextView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_marginBottom="8dp"
+        android:gravity="center"
+        android:text="@string/soil_moisture_statistics_for_the_last_1_hour"
+        android:textSize="18sp"
+        android:textStyle="bold" />
+
+    <!-- LineChart (ẩn ban đầu) -->
+    <com.github.mikephil.charting.charts.LineChart
+        android:id="@+id/SoilMoisStatsChart"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_above="@id/statsCardView"
+        android:layout_below="@id/SoilMoisStatsTitleTextView"
+        android:layout_marginBottom="16dp"
+        android:visibility="gone" />
+
+    <!-- ProgressBar (hiển thị ban đầu) -->
+    <ProgressBar
+        android:id="@+id/SoilMoisLoadingProgressBar"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Soil Moisture Page"
         android:layout_centerInParent="true"
-        android:textSize="40sp"
-        android:textColor="@color/black"
-        />
+        android:indeterminateTint="@color/lavender"
+        android:indeterminateTintMode="src_in"
+        android:visibility="visible" />
+
+    <!-- TextView "No Data" (ẩn ban đầu) -->
+    <TextView
+        android:id="@+id/SoilMoisNoDataTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:text="@string/no_chart_data_available"
+        android:visibility="gone" />
+
+    <!-- Thông tin thống kê (ẩn ban đầu) -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/SoilMoisStatsCardView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="16dp"
+        android:visibility="gone"
+        app:cardCornerRadius="8dp"
+        app:cardElevation="4dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="16dp">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/highest"
+                    android:textSize="12sp" />
+
+                <TextView
+                    android:id="@+id/SoilMoisMaxValueTextView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="--"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="#FF0000" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/lowest"
+                    android:textSize="12sp" />
+
+                <TextView
+                    android:id="@+id/SoilMoisMinValueTextView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="--"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="#0000FF"
+                    tools:ignore="HardcodedText" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/average"
+                    android:textSize="12sp" />
+
+                <TextView
+                    android:id="@+id/SoilMoisAvgValueTextView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="--"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="#008800"
+                    tools:ignore="HardcodedText" />
+            </LinearLayout>
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
 
 </RelativeLayout>

@@ -1,31 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
-<menu xmlns:android="http://schemas.android.com/apk/res/android"
+<menu xmlns:tools="http://schemas.android.com/tools"
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
 
     <item
         android:id="@+id/nav_pump"
          android:icon="@drawable/baseline_power_settings_new_24"
-        android:title="Pump" />
+        android:title="@string/pump" />
 
     <item
         android:id="@+id/nav_temperature"
          android:icon="@drawable/baseline_thermostat_24"
-        android:title="Temperature" />
+        android:title="@string/temperature" />
 
     <item
         android:id="@+id/nav_humidity"
          android:icon="@drawable/baseline_water_drop_24"
-        android:title="Humidity" />
+        android:title="@string/humidity" />
 
     <item
         android:id="@+id/nav_soilmoisture"
          android:icon="@drawable/baseline_water_24"
-        android:title="Soil" />
+        android:title="Soil Moisture"
+        tools:ignore="HardcodedText" />
 
     <item
         android:id="@+id/nav_setting"
          android:icon="@drawable/baseline_settings_24"
-        android:title="Setting" />
+        android:title="@string/setting" />
 
 </menu>

@@ -1,7 +1,7 @@
 <resources>
-    <string name="app_name">Watering</string>
-    <string name="turn_on_pump">ON</string>
-    <string name="turn_off_pump">OFF</string>
+    <string name="app_name">WateringV2</string>
+    <string name="turn_on_pump">TURN ON</string>
+    <string name="turn_off_pump">TURN OFF</string>
     <string name="reset">RESET</string>
     <string name="no_data_for_the_last_3_days">No data for the last 1 days</string>
     <string name="temperature_statistics_for_the_last_1_hour">Temperature statistics for the last 1 hour</string>
@@ -18,4 +18,10 @@
     <string name="lowest">Lowest</string>
     <string name="average">Average</string>
     <string name="temperature_statistics">Temperature statistics</string>
+    <string name="humidity">Humidity</string>
+    <string name="no_chart_data_available">No chart data available</string>
+    <string name="logout">LOG OUT</string>
+    <string name="pump">Pump</string>
+    <string name="temperature">Temperature</string>
+    <string name="setting">Setting</string>
 </resources>
