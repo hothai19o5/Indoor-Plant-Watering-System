@@ -12,7 +12,6 @@ import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,7 +27,6 @@ public class FirebaseDataHelper {
     public FirebaseDataHelper() {
         FirebaseDatabase database = FirebaseDatabase.getInstance("https://projectii-fabc6-default-rtdb.asia-southeast1.firebasedatabase.app");
         databaseReference = database.getReference("sensor_data");
-        Log.d(TAG, "FirebaseDataHelper initialized with reference: " + databaseReference.toString());
     }
     
     public void saveSensorData(SensorData data) {
@@ -49,14 +47,11 @@ public class FirebaseDataHelper {
     }
 
     public void getLatestData(DataCallback<SensorData> callback) {
-        Log.d(TAG, "Getting latest data...");
         Query query = databaseReference.orderByKey().limitToLast(1); // Sắp xếp theo key, lấy bản ghi cuối
-        Log.d(TAG, "Query: " + query.toString());
 
         query.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                Log.d(TAG, "Data snapshot received: " + dataSnapshot.exists() + ", childCount: " + dataSnapshot.getChildrenCount());
 
                 if (!dataSnapshot.exists() || dataSnapshot.getChildrenCount() == 0) {
                     Log.w(TAG, "No data available");
@@ -66,8 +61,6 @@ public class FirebaseDataHelper {
 
                 // Không cần vòng lặp, vì chỉ có 1 phần tử
                 DataSnapshot snapshot = dataSnapshot.getChildren().iterator().next(); // Lấy snapshot trực tiếp
-
-                Log.d(TAG, "Processing snapshot: " + snapshot.getKey());
 
                 try {
                     // Sử dụng getValue(Class) để tự động chuyển đổi
@@ -82,8 +75,6 @@ public class FirebaseDataHelper {
                     soilMoisture = (soilMoisture == null) ? 0f : soilMoisture;
                     timestamp = (timestamp == null) ? 0L : timestamp;
 
-
-
                     // Tạo object SensorData
                     SensorData latestData = new SensorData();
                     latestData.setTemperature(temperature);
@@ -91,8 +82,6 @@ public class FirebaseDataHelper {
                     latestData.setSoilMoisture(soilMoisture);
                     latestData.setTimestamp(timestamp);
 
-
-                    Log.d(TAG, "Created SensorData: " + latestData.getTemperature() + "°C, " + latestData.getHumidity() + "%, " + latestData.getSoilMoisture() + "%" + "timestamp: " + latestData.getTimestamp());
                     callback.onCallback(latestData); // Trả về dữ liệu
 
                 } catch (Exception e) {
@@ -109,20 +98,15 @@ public class FirebaseDataHelper {
         });
     }
 
-    public void getDataFromLast1Hour(DataCallback<List<SensorDataRecord>> callback) {
-        // Tính thời điểm 1 ngày trước
-        Calendar calendar = Calendar.getInstance();
-        calendar.add(Calendar.DAY_OF_YEAR, 0);
-        long oneHourAgo = calendar.getTimeInMillis()/1000 - 3600;
-        Log.d("FirebaseDataHelper", "oneHourAgo: " + oneHourAgo);
+    public void getDataFromLast5Minutes(DataCallback<List<SensorDataRecord>> callback) {
+        long now = System.currentTimeMillis() / 1000;
+        long fiveMinutesAgo = now - 300;
 
-        Query query = databaseReference.orderByChild("timestamp").startAt(oneHourAgo);
-        Log.d("FirebaseDataHelper", "Query: " + query.toString());
+        Query query = databaseReference.orderByChild("timestamp").startAt(fiveMinutesAgo);
 
         query.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                Log.d(TAG, "Data snapshot received: " + dataSnapshot.exists() + ", childCount: " + dataSnapshot.getChildrenCount());
                 List<SensorDataRecord> dataList = new ArrayList<>();
 
                 for (DataSnapshot snapshot : dataSnapshot.getChildren()) {

@@ -1,7 +1,6 @@
 package com.example.mqtt;
 
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.EditText;
@@ -22,11 +21,11 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
 
+import java.util.Objects;
+
 public class LoginActivity extends AppCompatActivity {
     private EditText usernameEditText;
     private EditText passwordEditText;
-    private Button loginButton;
-    private SignInButton googleSignInButton;
     private FirebaseAuth mAuth;
     private GoogleSignInClient mGoogleSignInClient;
     private static final int RC_SIGN_IN = 9001;
@@ -48,8 +47,8 @@ public class LoginActivity extends AppCompatActivity {
 
         usernameEditText = findViewById(R.id.username);
         passwordEditText = findViewById(R.id.password);
-        loginButton = findViewById(R.id.login);
-        googleSignInButton = findViewById(R.id.google_sign_in_button);
+        Button loginButton = findViewById(R.id.login);
+        SignInButton googleSignInButton = findViewById(R.id.google_sign_in_button);
 
         loginButton.setOnClickListener(v -> {
             String email = usernameEditText.getText().toString();
@@ -77,7 +76,7 @@ public class LoginActivity extends AppCompatActivity {
                     startMainActivity();
                 } else {
                     // Đăng nhập thất bại
-                    Toast.makeText(LoginActivity.this, "Authentication failed: " + task.getException().getMessage(), 
+                    Toast.makeText(LoginActivity.this, "Authentication failed: " + Objects.requireNonNull(task.getException()).getMessage(),
                             Toast.LENGTH_SHORT).show();
                 }
             });
@@ -116,7 +115,7 @@ public class LoginActivity extends AppCompatActivity {
                         startMainActivity();
                     } else {
                         // Đăng nhập thất bại
-                        Toast.makeText(LoginActivity.this, "Xác thực với Google thất bại: " + task.getException().getMessage(),
+                        Toast.makeText(LoginActivity.this, "Xác thực với Google thất bại: " + Objects.requireNonNull(task.getException()).getMessage(),
                                 Toast.LENGTH_SHORT).show();
                     }
                 });
