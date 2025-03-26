@@ -30,16 +30,6 @@
             android:name=".LoginActivity"
             android:exported="false">
         </activity>
-        <activity
-            android:name=".StatsActivity"
-            android:theme="@style/Theme.AppCompat.Light.NoActionBar"
-            android:exported="false"
-            android:label="Thống kê dữ liệu"
-            android:parentActivityName=".MainActivity">
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value=".MainActivity" />
-        </activity>
         <!-- FCM Service -->
         <service
             android:name=".MyFirebaseMessagingService"

@@ -6,11 +6,9 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.graphics.Insets;
@@ -33,29 +31,20 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.gson.Gson;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
-
-    private TextView temperatureTextView;
-    private TextView humidityTextView;
-    private TextView soilMoistureTextView;
-
-    private final Gson gson = new Gson();
     private FirebaseDataHelper firebaseDataHelper;
     private DatabaseReference commandsRef;
 
-    private Handler handler = new Handler(Looper.getMainLooper());
+    private final Handler handler = new Handler(Looper.getMainLooper());
     private Runnable dataUpdateRunnable;
     private static final int UPDATE_INTERVAL = 3000; // 3 giây
 
     @SuppressLint("StaticFieldLeak")
     public static MainActivity instance;  // Không cần thiết phải có instance
-
-    private BottomNavigationView bottomNavigationView;
 
     // Biến để theo dõi fragment hiện tại
     private Fragment currentFragment;
@@ -71,7 +60,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         
         // Initialize Bottom Navigation
-        bottomNavigationView = findViewById(R.id.bottom_navigation);
+        BottomNavigationView bottomNavigationView = findViewById(R.id.bottom_navigation);
         bottomNavigationView.setOnItemSelectedListener(item -> {
             int itemId = item.getItemId();
             
@@ -98,16 +87,8 @@ public class MainActivity extends AppCompatActivity {
         // Set default fragment
         replaceFragment(new PumpFragment());
 
-        Log.d("MainActivity", "Initializing Firebase connection");
-
         firebaseDataHelper = new FirebaseDataHelper();
         commandsRef = FirebaseDatabase.getInstance().getReference("commands");
-
-        temperatureTextView = findViewById(R.id.temperatureTextView);
-        humidityTextView = findViewById(R.id.humidityTextView);
-        soilMoistureTextView = findViewById(R.id.soilMoistureTextView);
-
-        // Không gọi loadLatestDataFromFirebase() ở đây nữa
 
         // Tạo Runnable để cập nhật dữ liệu định kỳ
         dataUpdateRunnable = new Runnable() {
@@ -129,26 +110,6 @@ public class MainActivity extends AppCompatActivity {
             finish();
             return;
         }
-
-        // findViewById(R.id.turnOnPumpButton).setOnClickListener(v -> sendCommand("TURN_ON_PUMP"));
-        // findViewById(R.id.turnOffPumpButton).setOnClickListener(v -> sendCommand("TURN_OFF_PUMP"));
-        // findViewById(R.id.resetButton).setOnClickListener(v -> sendCommand("RESET"));
-        // ...các dòng khác
-//        findViewById(R.id.temperatureStatsButton).setOnClickListener(v -> {
-//            Intent intent = new Intent(MainActivity.this, StatsActivity.class);
-//            intent.putExtra(StatsActivity.EXTRA_STAT_TYPE, StatsActivity.TYPE_TEMPERATURE);
-//            startActivity(intent);
-//        });
-//        findViewById(R.id.humidityStatsButton).setOnClickListener(v -> {
-//            Intent intent = new Intent(MainActivity.this, StatsActivity.class);
-//            intent.putExtra(StatsActivity.EXTRA_STAT_TYPE, StatsActivity.TYPE_HUMIDITY);
-//            startActivity(intent);
-//        });
-//        findViewById(R.id.soilMoistureStatsButton).setOnClickListener(v -> {
-//            Intent intent = new Intent(MainActivity.this, StatsActivity.class);
-//            intent.putExtra(StatsActivity.EXTRA_STAT_TYPE, StatsActivity.TYPE_SOIL_MOISTURE);
-//            startActivity(intent);
-//        });
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
@@ -194,12 +155,6 @@ public class MainActivity extends AppCompatActivity {
         startActivity(intent);
         finish();
     }
-
-    public void updateFromFCM(SensorData sensorData) { // Cái này bạn chưa dùng, nhưng cứ để đây
-        if (sensorData != null) {
-            updateUI(sensorData);
-        }
-    }
     private void startDataUpdates() {
         handler.postDelayed(dataUpdateRunnable, UPDATE_INTERVAL); // Bắt đầu lần cập nhật đầu tiên
     }
@@ -224,24 +179,6 @@ public class MainActivity extends AppCompatActivity {
     protected void onDestroy(){
         super.onDestroy();
         stopDataUpdates(); // Dừng Handler khi activity destroy.
-    }
-
-
-    @SuppressLint("SetTextI18n")
-    private void updateUI(SensorData sensorData) {
-        if (sensorData != null) {
-            Log.d("MainActivity", "Updating UI with: " + sensorData.getTemperature() + "°C, " +
-                    sensorData.getHumidity() + "%, " + sensorData.getSoilMoisture() + "%");
-            temperatureTextView.setText(sensorData.getTemperature() + "°C");
-            humidityTextView.setText((int)sensorData.getHumidity() + "%");
-            soilMoistureTextView.setText((int)sensorData.getSoilMoisture() + "%");
-        } else {
-            Log.w("MainActivity", "SensorData is null in updateUI");
-            // Hiển thị giá trị mặc định hoặc thông báo lỗi
-            temperatureTextView.setText("--°C");
-            humidityTextView.setText("--%");
-            soilMoistureTextView.setText("--%");
-        }
     }
 
     private void replaceFragment(Fragment fragment) {

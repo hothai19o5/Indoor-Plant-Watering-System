@@ -27,11 +27,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
                 // Lưu dữ liệu vào Firebase
                 FirebaseDataHelper dataHelper = new FirebaseDataHelper();
                 dataHelper.saveSensorData(sensorData);
-                
-                // Thông báo cho MainActivity cập nhật UI
-                if (MainActivity.instance != null) {
-                    MainActivity.instance.updateFromFCM(sensorData);
-                }
+
             } catch (Exception e) {
                 Log.e(TAG, "Error processing FCM data", e);
             }
