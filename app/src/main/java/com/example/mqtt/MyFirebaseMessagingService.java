@@ -25,7 +25,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
                 SensorData sensorData = gson.fromJson(jsonData, SensorData.class);
                 
                 // Lưu dữ liệu vào Firebase
-                FirebaseDataHelper dataHelper = new FirebaseDataHelper();
+                FirebaseDataHelper dataHelper = new FirebaseDataHelper(this);
                 dataHelper.saveSensorData(sensorData);
 
             } catch (Exception e) {

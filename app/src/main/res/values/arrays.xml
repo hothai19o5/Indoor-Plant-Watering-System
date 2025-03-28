@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="pump_durations">
+        <item>5 s</item>
+        <item>10 s</item>
+        <item>30 s</item>
+        <item>60 s</item>
+    </string-array>
+
+    <string-array name="firebase_intervals">
+        <item>5 min</item>
+        <item>1 hour</item>
+        <item>1 day</item>
+        <item>3 day</item>
+        <item>7 day</item>
+    </string-array>
+</resources>

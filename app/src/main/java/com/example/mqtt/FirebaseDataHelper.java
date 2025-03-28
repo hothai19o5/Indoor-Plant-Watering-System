@@ -1,5 +1,7 @@
 package com.example.mqtt;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -19,12 +21,15 @@ import java.util.Map;
 public class FirebaseDataHelper {
     private static final String TAG = "FirebaseDataHelper";
     private final DatabaseReference databaseReference;
-    
+    private final Context context;
+
     public interface DataCallback<T> {
         void onCallback(T data);
     }
     
-    public FirebaseDataHelper() {
+    public FirebaseDataHelper(Context context) {
+        this.context = context;
+        // Khởi tạo Firebase Database
         FirebaseDatabase database = FirebaseDatabase.getInstance("https://projectii-fabc6-default-rtdb.asia-southeast1.firebasedatabase.app");
         databaseReference = database.getReference("sensor_data");
     }
@@ -98,11 +103,18 @@ public class FirebaseDataHelper {
         });
     }
 
-    public void getDataFromLast5Minutes(DataCallback<List<SensorDataRecord>> callback) {
+    public void getDataFromInHistory(DataCallback<List<SensorDataRecord>> callback) {
+        // Lấy firebase interval từ SharedPreferences
+        String PREFS_NAME = "AppSettings";
+        SharedPreferences sharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        String KEY_FIREBASE_INTERVAL = "firebaseInterval";
+        long firebaseIntervalMillis = sharedPreferences.getLong(KEY_FIREBASE_INTERVAL, 300000); // Mặc định 5 phút nếu không tìm thấy
+        
         long now = System.currentTimeMillis() / 1000;
-        long fiveMinutesAgo = now - 300;
+        long intervalInSeconds = firebaseIntervalMillis / 1000;
+        long startTime = now - intervalInSeconds;
 
-        Query query = databaseReference.orderByChild("timestamp").startAt(fiveMinutesAgo);
+        Query query = databaseReference.orderByChild("timestamp").startAt(startTime);
 
         query.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override

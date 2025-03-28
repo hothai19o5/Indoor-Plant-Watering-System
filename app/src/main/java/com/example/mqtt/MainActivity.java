@@ -68,13 +68,13 @@ public class MainActivity extends AppCompatActivity {
                 replaceFragment(new PumpFragment());
                 return true;
             } else if (itemId == R.id.nav_temperature) {
-                replaceFragment(new TemperatureFragment());
+                replaceFragment(new TemperatureFragment(this));
                 return true;
             } else if (itemId == R.id.nav_humidity) {
-                replaceFragment(new HumidityFragment());
+                replaceFragment(new HumidityFragment(this));
                 return true;
             } else if (itemId == R.id.nav_soilmoisture) {
-                replaceFragment(new SoilMoisFragment());
+                replaceFragment(new SoilMoisFragment(this));
                 return true;
             } else if (itemId == R.id.nav_setting) {
                 replaceFragment(new SettingFragment());
@@ -87,7 +87,7 @@ public class MainActivity extends AppCompatActivity {
         // Set default fragment
         replaceFragment(new PumpFragment());
 
-        firebaseDataHelper = new FirebaseDataHelper();
+        firebaseDataHelper = new FirebaseDataHelper(this);
         commandsRef = FirebaseDatabase.getInstance().getReference("commands");
 
         // Tạo Runnable để cập nhật dữ liệu định kỳ

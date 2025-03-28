@@ -1,5 +1,7 @@
 package com.example.mqtt.fragments;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
@@ -43,15 +45,26 @@ public class SoilMoisFragment extends Fragment implements MainActivity.DataUpdat
     private TextView maxValueTextView;
     private TextView minValueTextView;
     private TextView avgValueTextView;
-
     private FirebaseDataHelper firebaseDataHelper;
     private List<Entry> entries = new ArrayList<>();
     private long startTime = System.currentTimeMillis();
     private LineDataSet dataSet;
+    private final Context context;
+    public long firebaseIntervalMillis;
+
+    public SoilMoisFragment(Context context) {
+        this.context = context;
+    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_soilmois_page, container, false);
+
+        // Lấy firebase interval từ SharedPreferences
+        String PREFS_NAME = "AppSettings";
+        SharedPreferences sharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        String KEY_FIREBASE_INTERVAL = "firebaseInterval";
+        firebaseIntervalMillis = sharedPreferences.getLong(KEY_FIREBASE_INTERVAL, 300000); // Mặc định 5 phút nếu không tìm thấy
 
         // Ánh xạ các thành phần giao diện
         chart = view.findViewById(R.id.SoilMoisStatsChart);
@@ -63,7 +76,7 @@ public class SoilMoisFragment extends Fragment implements MainActivity.DataUpdat
         avgValueTextView = view.findViewById(R.id.SoilMoisAvgValueTextView);
 
         // Khởi tạo FirebaseDataHelper
-        firebaseDataHelper = new FirebaseDataHelper();
+        firebaseDataHelper = new FirebaseDataHelper(getContext());
 
         // Thiết lập biểu đồ
         setupChart();
@@ -100,7 +113,7 @@ public class SoilMoisFragment extends Fragment implements MainActivity.DataUpdat
         xAxis.setDrawGridLines(false);
         xAxis.setLabelCount(5, true);  // Giữ số nhãn cố định
         xAxis.setValueFormatter(new ValueFormatter() {
-            private final SimpleDateFormat mFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
+            private final SimpleDateFormat mFormat = new SimpleDateFormat("HH:mm dd:MM", Locale.getDefault());
 
             @Override
             public String getFormattedValue(float value) {
@@ -162,7 +175,7 @@ public class SoilMoisFragment extends Fragment implements MainActivity.DataUpdat
     }
 
     private void loadHistoricalSoilMoisData() {
-        firebaseDataHelper.getDataFromLast5Minutes(historicalData -> {
+        firebaseDataHelper.getDataFromInHistory(historicalData -> {
 
             if (historicalData != null && !historicalData.isEmpty()) {
                 entries.clear();
@@ -227,7 +240,7 @@ public class SoilMoisFragment extends Fragment implements MainActivity.DataUpdat
         chart.invalidate(); // Vẽ lại biểu đồ
 
         // Thiết lập lại phạm vi hiển thị của đồ thị
-        chart.setVisibleXRangeMaximum(60 * 5); // 5 phút
+        chart.setVisibleXRangeMaximum(firebaseIntervalMillis); // 5 phút
 
         Log.d(TAG, "Biểu đồ đã được cập nhật với " + entries.size() + " điểm dữ liệu");
     }
@@ -241,7 +254,7 @@ public class SoilMoisFragment extends Fragment implements MainActivity.DataUpdat
         entries.add(newEntry);
 
         // Giới hạn số điểm dữ liệu
-        if (entries.size() > 100) {
+        if (entries.size() > firebaseIntervalMillis/3000) {
             entries.remove(0);
         }
 
@@ -253,7 +266,7 @@ public class SoilMoisFragment extends Fragment implements MainActivity.DataUpdat
         chart.notifyDataSetChanged();
 
         // Thiết lập lại phạm vi hiển thị của đồ thị
-        chart.setVisibleXRangeMaximum(60 * 5); // 5 phút
+        chart.setVisibleXRangeMaximum(firebaseIntervalMillis); // 5 phút
 
         chart.invalidate(); // Vẽ lại biểu đồ
     }

@@ -11,10 +11,11 @@
 
     <!-- CardView chứa tiêu đề -->
     <androidx.cardview.widget.CardView
+        android:id="@+id/title_card"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
-        android:layout_margin="16dp"
+        android:layout_margin="8dp"
         app:cardCornerRadius="16dp"
         app:cardElevation="4dp"
         app:cardBackgroundColor="@color/white">
@@ -26,35 +27,98 @@
             android:padding="24dp"
             android:gravity="center">
 
-            <!-- Tiêu đề chính -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Settings"
+                android:text="@string/settings"
                 android:textSize="32sp"
                 android:textStyle="bold"
                 android:textColor="@color/black" />
 
-            <!-- Dòng phụ mô tả -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Customize your preferences"
-                android:textSize="16sp"
-                android:textColor="@android:color/darker_gray"
-                android:layout_marginTop="8dp" />
+                android:text="@string/custom_your_settings"
+                android:textColor="@color/lavender"/>
         </LinearLayout>
     </androidx.cardview.widget.CardView>
 
-    <!-- GridLayout chứa hai nút RESET và LOGOUT -->
-    <GridLayout
+    <!-- CardView chứa phần chọn thời gian bơm -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/pump_time_card"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_centerInParent="true"
-        android:columnCount="2"
-        android:layout_margin="16dp">
+        android:layout_below="@id/title_card"
+        android:layout_margin="8dp"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="4dp"
+        app:cardBackgroundColor="@color/white">
 
-        <!-- Nút RESET -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/pump_duration"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="@color/black" />
+
+            <Spinner
+                android:id="@+id/pump_duration_spinner"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:entries="@array/pump_durations" />
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
+
+    <!-- CardView chứa phần chọn khoảng thời gian Firebase -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/firebase_interval_card"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/pump_time_card"
+        android:layout_margin="8dp"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="4dp"
+        app:cardBackgroundColor="@color/white">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/firebase_data_interval"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="@color/black" />
+
+            <Spinner
+                android:id="@+id/firebase_interval_spinner"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:entries="@array/firebase_intervals" />
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
+
+    <!-- GridLayout chứa các nút -->
+    <GridLayout
+        android:id="@+id/button_grid1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/firebase_interval_card"
+        android:columnCount="2"
+        android:layout_margin="8dp">
+
+        <!-- Nút Reset ESP32 -->
         <androidx.cardview.widget.CardView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -75,12 +139,64 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:backgroundTint="@color/lavender"
-                    android:text="@string/reset"
+                    android:text="@string/reset_hardware"
                     android:textSize="16sp" />
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
-        <!-- Nút LOGOUT -->
+        <!-- Nút Clear Command -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_columnWeight="1"
+            android:layout_margin="8dp"
+            app:cardCornerRadius="30dp"
+            app:cardElevation="0dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/custom_edittext"
+                android:orientation="vertical"
+                android:padding="8dp">
+
+                <Button
+                    android:id="@+id/clearCommandButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:backgroundTint="@color/lavender"
+                    android:text="@string/clear_command"
+                    android:textSize="16sp" />
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <!-- Nút Clear Sensor Data -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_columnWeight="1"
+            android:layout_margin="8dp"
+            app:cardCornerRadius="30dp"
+            app:cardElevation="0dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/custom_edittext"
+                android:orientation="vertical"
+                android:padding="8dp">
+
+                <Button
+                    android:id="@+id/clearSensorButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:backgroundTint="@color/lavender"
+                    android:text="@string/clear_sensor"
+                    android:textSize="15sp" />
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <!-- Nút Logout -->
         <androidx.cardview.widget.CardView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -102,9 +218,47 @@
                     android:layout_height="wrap_content"
                     android:backgroundTint="@color/lavender"
                     android:text="@string/logout"
-                    android:textSize="16sp" />
+                    android:textSize="15sp" />
             </LinearLayout>
         </androidx.cardview.widget.CardView>
     </GridLayout>
+
+    <GridLayout
+        android:id="@+id/button_grid2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/button_grid1"
+        android:columnCount="1"
+        android:layout_margin="8dp">
+
+        <!-- Nút Save Settings -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_columnWeight="1"
+            android:layout_margin="8dp"
+            app:cardCornerRadius="30dp"
+            app:cardElevation="0dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/custom_edittext"
+                android:orientation="vertical"
+                android:padding="8dp">
+
+                <Button
+                    android:id="@+id/saveSettingsButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:backgroundTint="@color/lavender"
+                    android:textColor="@color/white"
+                    android:text="@string/save_settings"
+                    android:textSize="16sp"
+                    android:enabled="false" />
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+    </GridLayout>
+
 
 </RelativeLayout>
