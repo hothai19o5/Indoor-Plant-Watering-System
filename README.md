@@ -116,7 +116,7 @@ void tokenStatusCallback(TokenInfo info) {
 
 void loop() {
   unsigned long currentMillis = millis();
-  
+
   // Kiểm tra kết nối WiFi
   if (WiFi.status() != WL_CONNECTED) {
     Serial.println("WiFi connection lost. Reconnecting...");
@@ -138,51 +138,59 @@ void loop() {
     checkCommands();
   }
 
-  timeClient.update();      // Cập nhật lại thời gian
+  timeClient.update();  // Cập nhật lại thời gian
 
   // Đọc dữ liệu từ DHT22
   float temperature = dht.readTemperature();  // Nhiệt độ (C)
   float humidity = dht.readHumidity();        // Độ ẩm (%)
 
   // Đọc độ ẩm đất từ cảm biến V1.2
-  int soilMoisture = analogRead(SOIL_PIN);    // (0-1036) - tỉ lệ nghịch
+  int soilMoisture = analogRead(SOIL_PIN);  // (0-1036) - tỉ lệ nghịch
   float percentSoilMoisture = 100 - map(soilMoisture, 350, 1024, 0, 100);
 
   // Kiểm tra nếu cảm biến lỗi
   if (isnan(temperature) || isnan(humidity) || soilMoisture <= 20 || soilMoisture >= 1023) {
     Serial.println("Sensor ERROR!!!");
-    digitalWrite(LED_DEBUG_PIN, HIGH);      // Bật led debug
+    sendNotiToFirebase("SENSOR ERROR");
+    digitalWrite(LED_DEBUG_PIN, HIGH);  // Bật led debug
     delay(1000);
     return;
   }
 
-  digitalWrite(LED_DEBUG_PIN, LOW);         // Tắt LED debug
-  
+  digitalWrite(LED_DEBUG_PIN, LOW);  // Tắt LED debug
+
   // In dữ liệu ra Serial Monitor
-  Serial.print("Temperature: "); Serial.print(temperature); Serial.println(" °C");
-  Serial.print("Humidity: "); Serial.print(humidity); Serial.println(" %");
-  Serial.print("Soil Moisture: "); Serial.println(percentSoilMoisture);
-  Serial.print("Time: "); Serial.println(timeClient.getFormattedTime());
+  Serial.print("Temperature: ");
+  Serial.print(temperature);
+  Serial.println(" °C");
+  Serial.print("Humidity: ");
+  Serial.print(humidity);
+  Serial.println(" %");
+  Serial.print("Soil Moisture: ");
+  Serial.println(percentSoilMoisture);
+  Serial.print("Time: ");
+  Serial.println(timeClient.getFormattedTime());
 
   // Logic điều khiển tưới nước tự động
   int hour = timeClient.getHours();
-  if(!manualOverride && (hour == 6 || hour == 18) && soilMoisture >= 800 && temperature <= 40) {
-    if(!pumpOn){ //Chỉ bật máy bơm nếu máy bơm đang tắt
-        pumpOn = true;
-        digitalWrite(RELAY2_PIN, HIGH);
-        Serial.println("Automatic watering started...");
-        delay(10000);
-        digitalWrite(RELAY2_PIN, LOW);
-        Serial.println("Automatic watering finished...");
-        pumpOn = false;
-      }
+  if (!manualOverride && (hour == 6 || hour == 18) && soilMoisture >= 800 && temperature <= 40) {
+    if (!pumpOn) {  //Chỉ bật máy bơm nếu máy bơm đang tắt
+      pumpOn = true;
+      digitalWrite(RELAY2_PIN, HIGH);
+      Serial.println("Automatic watering started...");
+      sendNotiToFirebase("AUTO PUMP");
+      delay(10000);
+      digitalWrite(RELAY2_PIN, LOW);
+      Serial.println("Automatic watering finished...");
+      pumpOn = false;
+    }
   }
 
   // Gửi dữ liệu lên Firebase
-  sendDataToFirebase(temperature, humidity, percentSoilMoisture); //Gửi dữ liệu lên Firebase
+  sendDataToFirebase(temperature, humidity, percentSoilMoisture);  //Gửi dữ liệu lên Firebase
 
   Serial.println("-----------------------------");
-  delay(2000); // Đọc dữ liệu mỗi 2 giây
+  delay(2000);  // Đọc dữ liệu mỗi 2 giây
 }
 
 void checkCommands() {
@@ -203,7 +211,7 @@ void checkCommands() {
   FirebaseJson *json = cmdData.jsonObjectPtr();
   FirebaseJsonData jsonData;
 
-  String commandPath = ""; // Đường dẫn đến node duy nhất
+  String commandPath = "";  // Đường dẫn đến node duy nhất
   json->iteratorBegin();
   int type;
   String key, value;
@@ -260,7 +268,7 @@ void checkConfig() {
   Serial.println(pumpDuration);
 }
 
-// Bật bơm không dùng delay
+// Bật bơm
 void turnOnPump() {
   if (!pumpOn) {
     pumpOn = true;
@@ -276,7 +284,7 @@ void checkPump() {
   if (pumpOn && millis() - pumpStartTime >= pumpDuration) {
     pumpOn = false;
     digitalWrite(RELAY2_PIN, LOW);
-    Serial.println("Pump turned OFF automatically after 10s");
+    Serial.printf("Pump turned OFF automatically after %lu s\n", pumpDuration);
   }
 }
 
@@ -286,13 +294,37 @@ void sendDataToFirebase(float temperature, float humidity, float soilMoisture) {
   json.set("temperature", temperature);
   json.set("humidity", humidity);
   json.set("soilMoisture", soilMoisture);
-  json.set("timestamp", timeClient.getEpochTime());
+  unsigned long timestamp = timeClient.getEpochTime();
 
   // Gửi lên Firebase
+  int mod = timestamp % 1800;
+  // 30 phút gửi 1 lần, để thống kê dài ngày
+  if (mod < 5) {
+    json.set("timestamp", timestamp - mod);
+    if (Firebase.push(firebaseData, "/sensor_data_30min", json)) {
+      Serial.println("Data sent to Firebase /sensor_data_30min successfully");
+    } else {
+      Serial.println("Failed to send data to Firebase /sensor_data_30min");
+      Serial.println("REASON: " + firebaseData.errorReason());
+    }
+  }
+  // 3-4s gửi 1 lần, xem trực tiếp
+  json.set("timestamp", timestamp);
   if (Firebase.push(firebaseData, "/sensor_data", json)) {
-    Serial.println("Data sent to Firebase successfully");
+    Serial.println("Data sent to Firebase /sensor_data successfully");
   } else {
-    Serial.println("Failed to send data to Firebase");
+    Serial.println("Failed to send data to Firebase /sensor_data");
+    Serial.println("REASON: " + firebaseData.errorReason());
+  }
+}
+
+void sendNotiToFirebase(String noti) {
+  json.clear();
+  json.set("Noti", noti);
+  if (Firebase.push(firebaseData, "/noti", json)) {
+    Serial.println("Data sent to Firebase /noti successfully");
+  } else {
+    Serial.println("Failed to send data to Firebase /noti");
     Serial.println("REASON: " + firebaseData.errorReason());
   }
 }
