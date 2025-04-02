@@ -8,6 +8,20 @@
     android:background="@color/white"
     tools:context=".fragments.PumpFragment">
 
+    <!-- ImageView cho icon WiFi -->
+    <ImageView
+        android:id="@+id/wifiIcon"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginTop="32dp"
+        android:layout_marginEnd="32dp"
+        android:src="@drawable/baseline_wifi_off_24"
+        android:contentDescription="WiFi Connected"
+        app:tint="@color/lavender"
+        tools:ignore="HardcodedText" />
+
     <GridLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -39,7 +53,7 @@
                     android:id="@+id/temperatureTextView"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="25.4℃"
+                    android:text="--℃"
                     android:textColor="@color/lavender"
                     android:textSize="90dp"
                     android:textStyle="bold" />
@@ -76,7 +90,7 @@
                         android:id="@+id/humidityTextView"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="50%"
+                        android:text="--%"
                         android:textColor="@color/lavender"
                         android:textSize="50sp"
                         android:textStyle="bold"
@@ -113,7 +127,7 @@
                         android:id="@+id/soilMoistureTextView"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="50%"
+                        android:text="--%"
                         android:textColor="@color/lavender"
                         android:textSize="50sp"
                         android:textStyle="bold"

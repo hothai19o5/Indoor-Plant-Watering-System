@@ -22,7 +22,7 @@
 #include <WiFiUdp.h>
 #include <NTPClient.h>
 #include <ArduinoJson.h>
-#include <FirebaseESP8266.h>                            // Thư viện Firebase
+#include <FirebaseESP8266.h>                            
 #include <WiFiManager.h>
 
 #define DHTPIN D2                                       // Chân kết nối DHT22
@@ -274,7 +274,7 @@ void turnOnPump() {
     pumpOn = true;
     manualOverride = true;
     digitalWrite(RELAY2_PIN, HIGH);
-    pumpStartTime = millis();  // Ghi lại thời gian bật bơm
+    pumpStartTime = millis();           // Ghi lại thời gian bật bơm
     Serial.println("Pump turned ON");
   }
 }
@@ -307,6 +307,7 @@ void sendDataToFirebase(float temperature, float humidity, float soilMoisture) {
       Serial.println("Failed to send data to Firebase /sensor_data_30min");
       Serial.println("REASON: " + firebaseData.errorReason());
     }
+    delay(3000);                // Tránh gửi 2 lần dữ liệu với 1 timestamp
   }
   // 3-4s gửi 1 lần, xem trực tiếp
   json.set("timestamp", timestamp);

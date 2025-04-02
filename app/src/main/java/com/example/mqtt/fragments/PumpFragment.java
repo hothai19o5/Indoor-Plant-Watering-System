@@ -7,6 +7,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -23,6 +24,7 @@ public class PumpFragment extends Fragment implements MainActivity.DataUpdateLis
     private TextView temperatureTextView;
     private TextView humidityTextView;
     private TextView soilMoistureTextView;
+    private ImageView wifiConnect;
 
     @Nullable
     @Override
@@ -33,6 +35,7 @@ public class PumpFragment extends Fragment implements MainActivity.DataUpdateLis
         temperatureTextView = view.findViewById(R.id.temperatureTextView);
         humidityTextView = view.findViewById(R.id.humidityTextView);
         soilMoistureTextView = view.findViewById(R.id.soilMoistureTextView);
+        wifiConnect = view.findViewById(R.id.wifiIcon);
 
         Button turnOnPumpButton = view.findViewById(R.id.turnOnPumpButton);
         Button turnOffPumpButton = view.findViewById(R.id.turnOffPumpButton);
@@ -62,6 +65,15 @@ public class PumpFragment extends Fragment implements MainActivity.DataUpdateLis
             temperatureTextView.setText(sensorData.getTemperature() + "°C");
             humidityTextView.setText((int)sensorData.getHumidity() + "%");
             soilMoistureTextView.setText((int)sensorData.getSoilMoisture() + "%");
+
+            if(System.currentTimeMillis()/1000 - sensorData.getTimestamp() < 5) {
+                wifiConnect.setImageResource(R.drawable.baseline_wifi_24);
+            } else {
+                wifiConnect.setImageResource(R.drawable.baseline_wifi_off_24);
+                temperatureTextView.setText("--°C");
+                humidityTextView.setText("--%");
+                soilMoistureTextView.setText("--%");
+            }
         } else {
             Log.w("PumpFragment", "SensorData is null in onDataUpdate");
             temperatureTextView.setText("--°C");
