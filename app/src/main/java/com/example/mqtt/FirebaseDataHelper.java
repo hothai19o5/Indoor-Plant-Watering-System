@@ -20,7 +20,8 @@ import java.util.Map;
 
 public class FirebaseDataHelper {
     private static final String TAG = "FirebaseDataHelper";
-    private final DatabaseReference databaseReference;
+    private final DatabaseReference databaseReference;  // Lấy dữ liệu từ node sensor_data, dữ liệu gửi liên tục
+    private final DatabaseReference databaseReference2; // Lấy dữ liệu từ node sensor_data_30min, 30p gửi 1 lần
     private final Context context;
 
     public interface DataCallback<T> {
@@ -32,6 +33,7 @@ public class FirebaseDataHelper {
         // Khởi tạo Firebase Database
         FirebaseDatabase database = FirebaseDatabase.getInstance("https://projectii-fabc6-default-rtdb.asia-southeast1.firebasedatabase.app");
         databaseReference = database.getReference("sensor_data");
+        databaseReference2 = database.getReference("sensor_data_30min");
     }
     
     public void saveSensorData(SensorData data) {
@@ -113,47 +115,91 @@ public class FirebaseDataHelper {
         long now = System.currentTimeMillis() / 1000;
         long intervalInSeconds = firebaseIntervalMillis / 1000;
         long startTime = now - intervalInSeconds;
+        // Trường hợp query dưới 1 giờ thì lấy toàn bộ dữ liệu trong 1 giờ
+        if(firebaseIntervalMillis <= 3600000) {
+            Query query = databaseReference.orderByChild("timestamp").startAt(startTime);
 
-        Query query = databaseReference.orderByChild("timestamp").startAt(startTime);
+            query.addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                    List<SensorDataRecord> dataList = new ArrayList<>();
 
-        query.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                List<SensorDataRecord> dataList = new ArrayList<>();
+                    for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                        SensorDataRecord record = new SensorDataRecord();
 
-                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                    SensorDataRecord record = new SensorDataRecord();
+                        // Lấy giá trị từ snapshot, có kiểm tra null
+                        Long timestamp = snapshot.child("timestamp").getValue(Long.class);
+                        Float temperature = snapshot.child("temperature").getValue(Float.class);
+                        Float humidity = snapshot.child("humidity").getValue(Float.class);
+                        Float soilMoisture = snapshot.child("soilMoisture").getValue(Float.class);
 
-                    // Lấy giá trị từ snapshot, có kiểm tra null
-                    Long timestamp = snapshot.child("timestamp").getValue(Long.class);
-                    Float temperature = snapshot.child("temperature").getValue(Float.class);
-                    Float humidity = snapshot.child("humidity").getValue(Float.class);
-                    Float soilMoisture = snapshot.child("soilMoisture").getValue(Float.class);
+                        if (timestamp != null) {
+                            record.setTimestamp(timestamp * 1000);
+                        }
+                        if (temperature != null) {
+                            record.setTemperature(temperature);
+                        }
+                        if (humidity != null) {
+                            record.setHumidity(humidity);
+                        }
+                        if (soilMoisture != null) {
+                            record.setSoilMoisture(soilMoisture);
+                        }
 
-                    if (timestamp != null) {
-                        record.setTimestamp(timestamp*1000);
+                        dataList.add(record);
                     }
-                    if (temperature != null) {
-                        record.setTemperature(temperature);
-                    }
-                    if (humidity != null) {
-                        record.setHumidity(humidity);
-                    }
-                    if (soilMoisture != null) {
-                        record.setSoilMoisture(soilMoisture);
-                    }
 
-                    dataList.add(record);
+                    callback.onCallback(dataList);
                 }
 
-                callback.onCallback(dataList);
-            }
+                @Override
+                public void onCancelled(@NonNull DatabaseError error) {
+                    Log.e(TAG, "Failed to read data", error.toException());
+                    callback.onCallback(null); // Tốt hơn là trả về null thay vì danh sách rỗng
+                }
+            });
+        } else {    // Các TH thống kê dữ liêu trong thời gian dài thì lấy dữ liệu mỗi 30 phút / lần
+            Query query = databaseReference2.orderByChild("timestamp").startAt(startTime);
 
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-                Log.e(TAG, "Failed to read data", error.toException());
-                callback.onCallback(null); // Tốt hơn là trả về null thay vì danh sách rỗng
-            }
-        });
+            query.addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                    List<SensorDataRecord> dataList = new ArrayList<>();
+
+                    for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                        SensorDataRecord record = new SensorDataRecord();
+
+                        // Lấy giá trị từ snapshot, có kiểm tra null
+                        Long timestamp = snapshot.child("timestamp").getValue(Long.class);
+                        Float temperature = snapshot.child("temperature").getValue(Float.class);
+                        Float humidity = snapshot.child("humidity").getValue(Float.class);
+                        Float soilMoisture = snapshot.child("soilMoisture").getValue(Float.class);
+
+                        if (timestamp != null) {
+                            record.setTimestamp(timestamp * 1000);
+                        }
+                        if (temperature != null) {
+                            record.setTemperature(temperature);
+                        }
+                        if (humidity != null) {
+                            record.setHumidity(humidity);
+                        }
+                        if (soilMoisture != null) {
+                            record.setSoilMoisture(soilMoisture);
+                        }
+
+                        dataList.add(record);
+                    }
+
+                    callback.onCallback(dataList);
+                }
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError error) {
+                    Log.e(TAG, "Failed to read data", error.toException());
+                    callback.onCallback(null); // Tốt hơn là trả về null thay vì danh sách rỗng
+                }
+            });
+        }
     }
 }
