@@ -8,6 +8,20 @@
     android:background="@color/white"
     tools:context=".fragments.PumpFragment">
 
+    <!-- ImageView cho icon battery -->
+    <ImageView
+        android:id="@+id/batteryIcon"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_alignParentTop="true"
+        android:layout_marginTop="32dp"
+        android:layout_marginEnd="16dp"
+        android:layout_toStartOf="@+id/wifiIcon"
+        android:contentDescription="Electrical Connected"
+        android:src="@drawable/baseline_electrical_services_24"
+        app:tint="@color/lavender"
+        tools:ignore="HardcodedText" />
+
     <!-- ImageView cho icon WiFi -->
     <ImageView
         android:id="@+id/wifiIcon"
@@ -53,7 +67,7 @@
                     android:id="@+id/temperatureTextView"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="--℃"
+                    android:text="--°C"
                     android:textColor="@color/lavender"
                     android:textSize="90dp"
                     android:textStyle="bold" />
