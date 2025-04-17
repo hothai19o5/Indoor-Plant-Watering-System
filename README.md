@@ -25,16 +25,16 @@
 #include <FirebaseESP8266.h>                            
 #include <WiFiManager.h>
 
-#define DHTPIN D2                                       // Chân kết nối DHT22
-#define DHTTYPE DHT22                                   // Định dạng cảm biến DHT22
+#define DHTPIN D2                                       // Chân kết nối DHT11
+#define DHTTYPE DHT11                                   // Định dạng cảm biến DHT11
 #define SOIL_PIN A0                                     // Chân đọc cảm biến độ ẩm đất
 #define RELAY1_PIN D5                                   // Chân điều khiển relay 1 (LED1)
 #define RELAY2_PIN D6                                   // Chân điều khiển relay 2 (MÁY BƠM)
-#define LED_BUG_DHT22_PIN D7                            // Chân điều khiển led bug DHT22
+#define LED_BUG_DHT11_PIN D7                            // Chân điều khiển led bug DHT11
 #define LED_BUG_V12_PIN D3                              // Chân điều khiển led bug V1.2
 #define LED_NOT_CONNECT_WIFI_PIN D8                     // Chân điều khiển Led khi không kết nối Wifi
 
-DHT dht(DHTPIN, DHTTYPE);                               // Khởi tạo DHT22
+DHT dht(DHTPIN, DHTTYPE);                               // Khởi tạo DHT11
 
 WiFiUDP ntpUDP;                                         // Khởi tạo UDP
 
@@ -78,7 +78,7 @@ void setup() {
   digitalWrite(RELAY2_PIN, LOW);                        // Tắt relay 2 (máy bơm) khi khởi động
 
   pinMode(SOIL_PIN, INPUT);                             // Thiết lập chân đọc độ ẩm đất là INPUT
-  pinMode(LED_BUG_DHT22_PIN, OUTPUT);                   // Thiết lập chân led bug dht22 là OUTPUT
+  pinMode(LED_BUG_DHT11_PIN, OUTPUT);                   // Thiết lập chân led bug dht11 là OUTPUT
   pinMode(LED_BUG_V12_PIN, OUTPUT);                     // Thiết lập chân led bug v1.2 là OUTPUT
 
   //Khai báo WiFi Manager
@@ -145,7 +145,7 @@ void loop() {
 
   timeClient.update();  // Cập nhật lại thời gian
 
-  // Đọc dữ liệu từ DHT22
+  // Đọc dữ liệu từ DHT11
   float temperature = dht.readTemperature();            // Nhiệt độ (C)
   float humidity = dht.readHumidity();                  // Độ ẩm (%)
 
@@ -155,7 +155,7 @@ void loop() {
 
   // Kiểm tra nếu cảm biến lỗi
   if (isnan(temperature) || isnan(humidity)) {
-    digitalWrite(LED_BUG_DHT22_PIN, HIGH);              // Bật led debug
+    digitalWrite(LED_BUG_DHT11_PIN, HIGH);              // Bật led debug
     delay(60000);
     return;
   } else if (soilMoisture <= 20 || soilMoisture >= 1023) {
@@ -164,7 +164,7 @@ void loop() {
     return;
   }
 
-  digitalWrite(LED_BUG_DHT22_PIN, LOW);                 // Tắt LED debug
+  digitalWrite(LED_BUG_DHT11_PIN, LOW);                 // Tắt LED debug
   digitalWrite(LED_BUG_V12_PIN, LOW);                   // Tắt LED debug
 
   // Logic điều khiển tưới nước tự động
