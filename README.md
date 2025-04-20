@@ -61,5 +61,5 @@ This project is a smart **Indoor Plant Watering System** that monitors and contr
 
 ### Hardware module wiring diagram
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/eea64c6b-8024-4a24-aea1-fa3363c84fd9" alt="" width="90%">
+  <img src="https://github.com/user-attachments/assets/5f789ea5-39c1-4ff2-87bd-e0e38798d5e7" alt="" width="90%">
 </p>
