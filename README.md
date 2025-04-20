@@ -1,4 +1,4 @@
-# INDOOR PLANT WATERING SYSTEM
+# 🪴INDOOR PLANT WATERING SYSTEM
 ## Overview
 This project is a smart **Indoor Plant Watering System** that monitors and controls soil moisture, temperature, and humidity to ensure your plants are always well cared for. The system includes a **hardware module** (based on ESP8266/ESP32) and an **Android mobile app** for real-time monitoring and manual or automatic control.
 
@@ -6,28 +6,29 @@ This project is a smart **Indoor Plant Watering System** that monitors and contr
 - 🌱 Real-time monitoring of:
     - Soil moisture
     - Air temperature and humidity
-    - Power source status (battery or adapter)
+    - Batterry level ( Updating... )
+    - Power source status battery or adapter ( Updating... )
+    - Water tank level ( Updating... )
 - 📱 Android app with:
     - Sensor data display
     - Manual water triggering
     - Automatic watering mode
     - Firebase real-time database integration
+    - Data statistics
+    - Add hardware device ( Updating... )
 - 🔌 Hardware:
-    - ESP8266/ESP32 + DHT22 + soil moisture sensor
+    - ESP8266/ESP32 + DHT11 + soil moisture sensor V1.2
+    - INA219 for monitoring battery level
+    - Ultrasonic Distance Sensor
     - Supports both 12V power adapter and 18650 battery pack
-    - Sends sensor data every 3–4 seconds to Firebase
+    - Sends sensor data every 5 seconds to Firebase
 - ☁️ Cloud Function:
-    - Summarizes hourly data for analytics
-- 🔊 (Optional) Voice Assistant:
-    - Voice command support via ESP32 + speech recognition
-    - Uses WebSocket + Vosk + Google Gemini + Picovoice Orca
+    - Send notification from ESP to App
 
 ## Technologies Used
-- **Embedded**: ESP8266 / ESP32, DHT22, soil moisture sensor, MAX98357A, INMP441
-- **Android**: Java/Kotlin, Firebase Realtime Database, Retrofit/WebSocket
+- **Embedded**: ESP8266 / ESP32, DHT11, soil moisture sensor V1.2, INA219, YX850
+- **Android**: Java, Firebase Realtime Database
 - **Cloud**: Firebase Functions (JavaScript)
-- **Voice AI**: Vosk (Speech-to-Text), Google Gemini (LLM), Picovoice Orca (TTS)
-- **Communication**: MQTT / HTTP / WebSocket
 
 ## Setup Instructions
 
