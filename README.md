@@ -19,14 +19,14 @@ This project is a smart **Indoor Plant Watering System** that monitors and contr
 - 🔌 Hardware:
     - ESP8266/ESP32 + DHT11 + soil moisture sensor V1.2
     - INA219 for monitoring battery level
-    - Ultrasonic Distance Sensor
-    - Supports both 12V power adapter and 18650 battery pack
+    - Ultrasonic Distance Sensor HC-SR04
+    - Supports both 12V power adapter and 12V battery pack
     - Sends sensor data every 5 seconds to Firebase
 - ☁️ Cloud Function:
     - Send notification from ESP to App
 
 ## Technologies Used
-- **Embedded**: ESP8266 / ESP32, DHT11, soil moisture sensor V1.2, INA219, YX850
+- **Embedded**: ESP8266 / ESP32, DHT11, Capacitive soil moisture sensor V1.2, INA219, YX850, HC-SR04, LM2596
 - **Android**: Java, Firebase Realtime Database
 - **Cloud**: Firebase Functions (JavaScript)
 
@@ -49,6 +49,12 @@ This project is a smart **Indoor Plant Watering System** that monitors and contr
 3. Update ESP firmware and Android app with database URL and API keys.
 
 ## Images
+
+### Hardware module wiring diagram
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/e3222fae-8ff2-4b44-9eb6-628ee79bf657" alt="" width="90%">
+</p>
+
 ### Android App
 <p align="center">
   <img src="https://github.com/user-attachments/assets/89eb3115-d9ee-4dc7-a790-9b9ca165fac4" alt="" width="30%">
@@ -59,7 +65,3 @@ This project is a smart **Indoor Plant Watering System** that monitors and contr
   <img src="https://github.com/user-attachments/assets/944dbc05-c679-4dae-8753-7f5476bad9ad" alt="" width="30%">
 </p>
 
-### Hardware module wiring diagram
-<p align="center">
-  <img src="https://github.com/user-attachments/assets/5f789ea5-39c1-4ff2-87bd-e0e38798d5e7" alt="" width="90%">
-</p>
