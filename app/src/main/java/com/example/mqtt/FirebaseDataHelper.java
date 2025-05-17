@@ -46,6 +46,8 @@ public class FirebaseDataHelper {
         dataMap.put("temperature", data.getTemperature());
         dataMap.put("humidity", data.getHumidity());
         dataMap.put("soilMoisture", data.getSoilMoisture());
+        dataMap.put("batteryLevel", data.getBatteryLevel());
+        dataMap.put("waterTankLevel", data.getTankWaterLevel());
         
         // Lưu dữ liệu
         newDataRef.setValue(dataMap)
@@ -75,12 +77,16 @@ public class FirebaseDataHelper {
                     Float humidity = snapshot.child("humidity").getValue(Float.class);
                     Float soilMoisture = snapshot.child("soilMoisture").getValue(Float.class);
                     Long timestamp = snapshot.child("timestamp").getValue(Long.class);
+                    Float batteryLevel = snapshot.child("batteryLevel").getValue(Float.class);
+                    Float tankWaterLevel = snapshot.child("tankWaterLevel").getValue(Float.class);
 
                     // Kiểm tra null trước khi sử dụng
                     temperature = (temperature == null) ? 0f : temperature;
                     humidity = (humidity == null) ? 0f : humidity;
                     soilMoisture = (soilMoisture == null) ? 0f : soilMoisture;
                     timestamp = (timestamp == null) ? 0L : timestamp;
+                    batteryLevel = (batteryLevel == null) ? 0f : batteryLevel;
+                    tankWaterLevel = (tankWaterLevel == null) ? 0f : tankWaterLevel;
 
                     // Tạo object SensorData
                     SensorData latestData = new SensorData();
@@ -88,6 +94,8 @@ public class FirebaseDataHelper {
                     latestData.setHumidity(humidity);
                     latestData.setSoilMoisture(soilMoisture);
                     latestData.setTimestamp(timestamp);
+                    latestData.setTankWaterLevel(tankWaterLevel);
+                    latestData.setBatteryLevel(batteryLevel);
 
                     callback.onCallback(latestData); // Trả về dữ liệu
 

@@ -9,6 +9,8 @@ public class SensorData {
     private float temperature;
     private float humidity;
     private float soilMoisture;
+    private float batteryLevel;
+    private float tankWaterLevel;
 
     public SensorData() {
         this.timestamp = System.currentTimeMillis();
@@ -49,15 +51,32 @@ public class SensorData {
     public void setSoilMoisture(float soilMoisture) {
         this.soilMoisture = soilMoisture;
     }
-    
-    @NonNull
+
+    public float getBatteryLevel() {
+        return batteryLevel;
+    }
+
+    public void setBatteryLevel(float batteryLevel) {
+        this.batteryLevel = batteryLevel;
+    }
+
+    public float getTankWaterLevel() {
+        return tankWaterLevel;
+    }
+
+    public void setTankWaterLevel(float tankWaterLevel) {
+        this.tankWaterLevel = tankWaterLevel;
+    }
+
     @Override
     public String toString() {
         return "SensorData{" +
-                "timestamp=" + new Date(timestamp) +
+                "timestamp=" + timestamp +
                 ", temperature=" + temperature +
                 ", humidity=" + humidity +
                 ", soilMoisture=" + soilMoisture +
+                ", batteryLevel=" + batteryLevel +
+                ", tankWaterLevel=" + tankWaterLevel +
                 '}';
     }
 }
