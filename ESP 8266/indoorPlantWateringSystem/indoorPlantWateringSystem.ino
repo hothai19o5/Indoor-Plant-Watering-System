@@ -6,15 +6,19 @@
 #include <ArduinoJson.h>
 #include <FirebaseESP8266.h>
 #include <WiFiManager.h>
+#include <Wire.h>
+#include <Adafruit_INA219.h>
 
 #define DHTPIN D2                    // Chân kết nối DHT11
 #define DHTTYPE DHT11                // Định dạng cảm biến DHT11
 #define SOIL_PIN A0                  // Chân đọc cảm biến độ ẩm đất
-#define RELAY1_PIN D5                // Chân điều khiển relay 1 (LED1)
 #define RELAY2_PIN D6                // Chân điều khiển relay 2 (MÁY BƠM)
-#define LED_BUG_DHT11_PIN D7         // Chân điều khiển led bug DHT11
-#define LED_BUG_V12_PIN D3           // Chân điều khiển led bug V1.2
-#define LED_NOT_CONNECT_WIFI_PIN D8  // Chân điều khiển Led khi không kết nối Wifi
+#define LED_BUG D8  // Chân điều khiển Led khi không kết nối Wifi
+#define TRIG_PIN D4  // GPIO2
+#define ECHO_PIN D7  // GPIO0
+
+// Khởi tạo INA219
+Adafruit_INA219 ina219;
 
 DHT dht(DHTPIN, DHTTYPE);  // Khởi tạo DHT11
 
@@ -42,6 +46,8 @@ bool manualOverride = false;
 unsigned long pumpStartTime = 0;     // Lưu thời điểm bắt đầu bật bơm
 unsigned long pumpDuration = 10000;  // Thời gian chạy máy bơm (mặc định 10 giây)
 
+float heightTankWater = 100;
+
 void configModeCallback(WiFiManager* myWiFiManager) {
   Serial.println("Entered config mode");
   Serial.println(WiFi.softAPIP());
@@ -54,21 +60,30 @@ void setup() {
   Serial.println();
   Serial.println("Booted");
 
-  pinMode(RELAY1_PIN, OUTPUT);    // Thiết lập chân relay là OUTPUT
+  // Khởi tạo I2C trên D5 (SDA), D1 (SCL)
+  Wire.begin(D5, D1);
+
+  // Khởi động INA219
+  if (!ina219.begin()) {
+    Serial.println("Không tìm thấy INA219. Kiểm tra kết nối!");
+    while (1);
+  }
+
+  pinMode(TRIG_PIN, OUTPUT);
+  pinMode(ECHO_PIN, INPUT);
+
   pinMode(RELAY2_PIN, OUTPUT);    // Thiết lập chân relay là OUTPUT
-  digitalWrite(RELAY1_PIN, LOW);  // Tắt relay 1 khi khởi động
   digitalWrite(RELAY2_PIN, LOW);  // Tắt relay 2 (máy bơm) khi khởi động
 
   pinMode(SOIL_PIN, INPUT);             // Thiết lập chân đọc độ ẩm đất là INPUT
-  pinMode(LED_BUG_DHT11_PIN, OUTPUT);   // Thiết lập chân led bug dht11 là OUTPUT
-  pinMode(LED_BUG_V12_PIN, OUTPUT);     // Thiết lập chân led bug v1.2 là OUTPUT
+  pinMode(LED_BUG, OUTPUT);   // Thiết lập chân led bug dht11 là OUTPUT
 
   //Khai báo WiFi Manager
   WiFiManager wifiManager;
   //Setup callback để khởi động AP với SSID "ESP+chipID"
   wifiManager.setAPCallback(configModeCallback);
   if (!wifiManager.autoConnect()) {
-    digitalWrite(LED_NOT_CONNECT_WIFI_PIN, HIGH);
+    digitalWrite(LED_BUG, HIGH);
     Serial.println("Failed to connect and hit timeout");
     //Nếu kết nối thất bại thì reset
     ESP.reset();
@@ -76,7 +91,7 @@ void setup() {
   }
   // Thành công thì thông báo ra màn hình
   Serial.println("Connected...");
-  digitalWrite(LED_NOT_CONNECT_WIFI_PIN, LOW);
+  digitalWrite(LED_BUG, LOW);
 
   // Cấu hình FirebaseConfig và FirebaseAuth
   firebaseConfig.host = FIREBASE_HOST;
@@ -105,7 +120,7 @@ void loop() {
 
   // Kiểm tra kết nối WiFi
   if (WiFi.status() != WL_CONNECTED) {
-    digitalWrite(LED_NOT_CONNECT_WIFI_PIN, HIGH);
+    digitalWrite(LED_BUG, HIGH);
     Serial.println("WiFi connection lost. Reconnecting...");
     ESP.reset();
     delay(1000);
@@ -135,19 +150,22 @@ void loop() {
   int soilMoisture = analogRead(SOIL_PIN);  // (0-1036) - tỉ lệ nghịch
   float percentSoilMoisture = 100 - map(soilMoisture, 350, 1024, 0, 100);
 
+  float batteryLevel = checkLevelBattery();
+
+  float tankWaterLevel = checkLevelWater();
+
   // Kiểm tra nếu cảm biến lỗi
   if (isnan(temperature) || isnan(humidity)) {
-    digitalWrite(LED_BUG_DHT11_PIN, HIGH);  // Bật led debug
+    digitalWrite(LED_BUG, HIGH);  // Bật led debug
     delay(60000);
     return;
   } else if (soilMoisture <= 20 || soilMoisture >= 1023) {
-    digitalWrite(LED_BUG_V12_PIN, HIGH);  // Bật led debug
+    digitalWrite(LED_BUG, HIGH);  // Bật led debug
     delay(60000);
     return;
   }
 
-  digitalWrite(LED_BUG_DHT11_PIN, LOW);   // Tắt LED debug
-  digitalWrite(LED_BUG_V12_PIN, LOW);     // Tắt LED debug
+  digitalWrite(LED_BUG, LOW);     // Tắt LED debug
 
   // Logic điều khiển tưới nước tự động
   int hour = timeClient.getHours();
@@ -156,7 +174,7 @@ void loop() {
   }
 
   // Gửi dữ liệu lên Firebase
-  sendDataToFirebase(temperature, humidity, percentSoilMoisture);  //Gửi dữ liệu lên Firebase
+  sendDataToFirebase(temperature, humidity, percentSoilMoisture, batteryLevel, tankWaterLevel);  //Gửi dữ liệu lên Firebase
 
   Serial.println("-----------------------------");
   delay(2000);  // Đọc dữ liệu mỗi 2 giây
@@ -263,12 +281,14 @@ void checkPump() {
 // ------------------------------ END CHECK PUMP -----------------------------
 
 // ------------------- Hàm gửi dữ liệu tới Firebase --------------------------
-void sendDataToFirebase(float temperature, float humidity, float soilMoisture) {
+void sendDataToFirebase(float temperature, float humidity, float soilMoisture, float batteryLevel, float tankWaterLevel) {
   // Tạo JSON chứa dữ liệu cảm biến
   json.clear();
   json.set("temperature", temperature);
   json.set("humidity", humidity);
   json.set("soilMoisture", soilMoisture);
+  json.set("batteryLevel", batteryLevel);
+  json.set("tankWaterLevel", tankWaterLevel);
   unsigned long timestamp = timeClient.getEpochTime();
 
   // Gửi lên Firebase
@@ -288,4 +308,48 @@ void sendDataToFirebase(float temperature, float humidity, float soilMoisture) {
     Serial.println("Failed to send data to Firebase /sensor_data");
     Serial.println("REASON: " + firebaseData.errorReason());
   }
+}
+
+float checkLevelWater() {
+  long duration;
+  float distance;
+
+  // Gửi xung trigger 10 micro giây
+  digitalWrite(TRIG_PIN, LOW);
+  delayMicroseconds(2);
+  digitalWrite(TRIG_PIN, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(TRIG_PIN, LOW);
+
+  // Đo thời gian echo phản hồi
+  duration = pulseIn(ECHO_PIN, HIGH);
+
+  // Tính khoảng cách (đơn vị cm)
+  distance = duration * 0.034 / 2;
+  Serial.print("Distance: ");
+  Serial.println(distance);
+
+  float level = distance * 100 / heightTankWater;
+
+  Serial.print("Level Tank Water: ");
+  Serial.println(level);
+
+  return level;
+}
+
+float checkLevelBattery() {
+  float busVoltage = ina219.getBusVoltage_V();    // Điện áp đo được (V)
+  float shuntVoltage = ina219.getShuntVoltage_mV() / 1000.0; // mV -> V
+  float loadVoltage = busVoltage + shuntVoltage;  // Tổng điện áp thực tế
+  
+  Serial.print("Điện áp pin: ");
+  Serial.print(loadVoltage);
+  Serial.println(" V");
+
+  float percent = (loadVoltage - 9) / (13.1 - 9) * 100.0;
+  percent = constrain(percent, 0, 100);
+  Serial.print("Dung lượng ước tính: ");
+  Serial.print(percent);
+  Serial.println(" %");
+  return percent;
 }
