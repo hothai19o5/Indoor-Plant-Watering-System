@@ -39,7 +39,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/custom_your_settings"
-                android:textColor="@color/lavender"/>
+                android:textColor="@color/black"/>
         </LinearLayout>
     </androidx.cardview.widget.CardView>
 
@@ -140,6 +140,7 @@
                     android:layout_height="wrap_content"
                     android:backgroundTint="@color/lavender"
                     android:text="@string/reset_hardware"
+                    android:textColor="@color/black"
                     android:textSize="16sp" />
             </LinearLayout>
         </androidx.cardview.widget.CardView>
@@ -166,6 +167,7 @@
                     android:layout_height="wrap_content"
                     android:backgroundTint="@color/lavender"
                     android:text="@string/clear_command"
+                    android:textColor="@color/black"
                     android:textSize="16sp" />
             </LinearLayout>
         </androidx.cardview.widget.CardView>
@@ -192,6 +194,7 @@
                     android:layout_height="wrap_content"
                     android:backgroundTint="@color/lavender"
                     android:text="@string/clear_sensor"
+                    android:textColor="@color/black"
                     android:textSize="15sp" />
             </LinearLayout>
         </androidx.cardview.widget.CardView>
@@ -218,6 +221,7 @@
                     android:layout_height="wrap_content"
                     android:backgroundTint="@color/lavender"
                     android:text="@string/logout"
+                    android:textColor="@color/black"
                     android:textSize="15sp" />
             </LinearLayout>
         </androidx.cardview.widget.CardView>
@@ -252,8 +256,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:backgroundTint="@color/lavender"
-                    android:textColor="@color/white"
                     android:text="@string/save_settings"
+                    android:textColor="@color/black"
                     android:textSize="16sp"
                     android:enabled="false" />
             </LinearLayout>
