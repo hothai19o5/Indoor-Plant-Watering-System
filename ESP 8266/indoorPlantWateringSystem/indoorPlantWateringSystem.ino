@@ -346,7 +346,7 @@ float checkLevelBattery() {
   Serial.print(loadVoltage);
   Serial.println(" V");
 
-  float percent = (loadVoltage - 9) / (13.1 - 9) * 100.0;
+  float percent = (loadVoltage - 9) / (12.6 - 9) * 100.0;
   percent = constrain(percent, 0, 100);
   Serial.print("Dung lượng ước tính: ");
   Serial.print(percent);
