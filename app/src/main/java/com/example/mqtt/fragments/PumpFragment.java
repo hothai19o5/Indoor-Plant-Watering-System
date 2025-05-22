@@ -27,6 +27,7 @@ public class PumpFragment extends Fragment implements MainActivity.DataUpdateLis
     private ImageView wifiConnect;
     private ImageView batteryIcon;
     private TextView tankWaterLevelTextView;
+    private TextView batteryText;
 
     @Nullable
     @Override
@@ -40,6 +41,7 @@ public class PumpFragment extends Fragment implements MainActivity.DataUpdateLis
         wifiConnect = view.findViewById(R.id.wifiIcon);
         batteryIcon = view.findViewById(R.id.batteryIcon);
         tankWaterLevelTextView = view.findViewById(R.id.tankWaterLevelTextView);
+        batteryText = view.findViewById(R.id.batteryText);
 
         Button turnOnPumpButton = view.findViewById(R.id.turnOnPumpButton);
         Button turnOffPumpButton = view.findViewById(R.id.turnOffPumpButton);
@@ -72,20 +74,28 @@ public class PumpFragment extends Fragment implements MainActivity.DataUpdateLis
             tankWaterLevelTextView.setText((int)sensorData.getTankWaterLevel() + "%");
 
             int batteryLevel = (int) sensorData.getBatteryLevel();
-            if(batteryLevel >= 95) {
+            if(batteryLevel >= 96) {
                 batteryIcon.setImageResource(R.drawable.baseline_electrical_services_24);
+                batteryText.setText("");
             } else if (batteryLevel >= 90) {
                 batteryIcon.setImageResource(R.drawable.baseline_battery_6_bar_24);
+                batteryText.setText(batteryLevel + "%");
             } else if (batteryLevel >= 70) {
                 batteryIcon.setImageResource(R.drawable.baseline_battery_5_bar_24);
+                batteryText.setText(batteryLevel + "%");
             } else if (batteryLevel >= 50) {
                 batteryIcon.setImageResource(R.drawable.baseline_battery_4_bar_24);
+                batteryText.setText(batteryLevel + "%");
             } else if (batteryLevel >= 40) {
                 batteryIcon.setImageResource(R.drawable.baseline_battery_3_bar_24);
+                batteryText.setText(batteryLevel + "%");
             } else if (batteryLevel >= 20) {
                 batteryIcon.setImageResource(R.drawable.baseline_battery_2_bar_24);
-            } else
+                batteryText.setText(batteryLevel + "%");
+            } else {
                 batteryIcon.setImageResource(R.drawable.baseline_battery_1_bar_24);
+                batteryText.setText(batteryLevel + "%");
+            }
 
             if(System.currentTimeMillis()/1000 - sensorData.getTimestamp() < 5) {
                 wifiConnect.setImageResource(R.drawable.baseline_wifi_24);
@@ -105,6 +115,7 @@ public class PumpFragment extends Fragment implements MainActivity.DataUpdateLis
             soilMoistureTextView.setText("--%");
             tankWaterLevelTextView.setText("--%");
             batteryIcon.setImageResource(R.drawable.baseline_battery_0_bar_24);
+            batteryText.setText("--%");
         }
     }
    
