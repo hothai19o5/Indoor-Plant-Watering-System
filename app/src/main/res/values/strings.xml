@@ -23,7 +23,7 @@
     <string name="logout">Log out</string>
     <string name="pump">Pump</string>
     <string name="temperature">Temperature</string>
-    <string name="settings">Settings</string>
+    <string name="settings">SETTINGS</string>
     <string name="custom_your_settings">Custom your settings</string>
     <string name="pump_duration">Pump Duration</string>
     <string name="firebase_data_interval">Firebase Data Interval</string>
@@ -31,4 +31,6 @@
     <string name="clear_command">Clear Command</string>
     <string name="clear_sensor">Clear Sensor</string>
     <string name="save_settings">Save Settings</string>
+    <string name="auto_pump">Auto Pump</string>
+    <string name="height_water_tank">Height Water Tank</string>
 </resources>
