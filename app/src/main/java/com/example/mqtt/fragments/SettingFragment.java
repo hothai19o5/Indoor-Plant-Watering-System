@@ -1,5 +1,6 @@
 package com.example.mqtt.fragments;
 
+import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -7,10 +8,14 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.Spinner;
+import android.widget.Switch;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -34,15 +39,22 @@ public class SettingFragment extends Fragment {
     private DatabaseReference databaseReferenceConfig;
     private long pumpDurationMillis = 5000; // Giá trị mặc định (5 giây)
     private long firebaseIntervalMillis = 300000; // Giá trị mặc định (5 phút)
+    private int autoPump = 0;
+    private int heightWaterTank = 100;
     
     // Added to track changes in settings
     private long savedPumpDurationMillis = 5000;
     private long savedFirebaseIntervalMillis = 300000;
+    private int savedAutoPump = 0;
+    private int savedheightWaterTank = 100;
+
     private boolean settingsChanged = false;
     private SharedPreferences sharedPreferences;
     private static final String PREFS_NAME = "AppSettings";
     private static final String KEY_PUMP_DURATION = "pumpDuration";
     private static final String KEY_FIREBASE_INTERVAL = "firebaseInterval";
+    private static final String KEY_AUTO_PUMP = "autoPump";
+    private static final String KEY_HEIGHT_WATER_PUMP = "heightWaterTank";
     private Button saveSettingsButton;
 
     @Nullable
@@ -57,10 +69,14 @@ public class SettingFragment extends Fragment {
         // Load saved settings
         pumpDurationMillis = sharedPreferences.getLong(KEY_PUMP_DURATION, 5000);
         firebaseIntervalMillis = sharedPreferences.getLong(KEY_FIREBASE_INTERVAL, 300000);
+        autoPump = sharedPreferences.getInt(KEY_AUTO_PUMP, 0);
+        heightWaterTank = sharedPreferences.getInt(KEY_HEIGHT_WATER_PUMP, 100);
         
         // Initialize saved values
         savedPumpDurationMillis = pumpDurationMillis;
         savedFirebaseIntervalMillis = firebaseIntervalMillis;
+        savedAutoPump = autoPump;
+        savedheightWaterTank = heightWaterTank;
 
         databaseReferenceCommand = FirebaseDatabase.getInstance().getReference("commands");
         databaseReferenceSensor = FirebaseDatabase.getInstance().getReference("sensor_data");
@@ -72,10 +88,18 @@ public class SettingFragment extends Fragment {
         Button clearSensorButton = view.findViewById(R.id.clearSensorButton);
         Spinner pumpDurationSpinner = view.findViewById(R.id.pump_duration_spinner);
         Spinner firebaseIntervalSpinner = view.findViewById(R.id.firebase_interval_spinner);
+        @SuppressLint("UseSwitchCompatOrMaterialCode") Switch autoPumpSwitch = view.findViewById(R.id.auto_pump_switch);
+        EditText heightWaterTankEditText = view.findViewById(R.id.height_water_pump);
         saveSettingsButton = view.findViewById(R.id.saveSettingsButton);
         
         // Set up adapters and initial values for spinners
         setupSpinners(pumpDurationSpinner, firebaseIntervalSpinner);
+
+        // Set up switch
+        setupSwitch(autoPumpSwitch);
+
+        // Set up edit text
+        setupEditText(heightWaterTankEditText);
         
         // Initially disable save button until changes are made
         saveSettingsButton.setEnabled(false);
@@ -107,6 +131,42 @@ public class SettingFragment extends Fragment {
             public void onNothingSelected(AdapterView<?> parent) {
                 // Không làm gì
             }
+        });
+
+        autoPumpSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            autoPump = isChecked ? 1 : 0;
+            checkForChanges();
+        });
+
+        //Sử dụng OnEditorActionListener (Khi nhấn Done/Enter)
+        heightWaterTankEditText.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_DONE || actionId == EditorInfo.IME_ACTION_NEXT) {
+                String inputText = heightWaterTankEditText.getText().toString().trim();
+
+                if (!inputText.isEmpty()) {
+                    try {
+                        int newHeight = Integer.parseInt(inputText);
+                        if (newHeight >= 0 && newHeight <= 1000) {
+                            heightWaterTank = newHeight;
+                            checkForChanges();
+
+                            // Ẩn bàn phím và clear focus
+                            heightWaterTankEditText.clearFocus();
+                            InputMethodManager imm = (InputMethodManager) requireActivity()
+                                    .getSystemService(Context.INPUT_METHOD_SERVICE);
+                            imm.hideSoftInputFromWindow(heightWaterTankEditText.getWindowToken(), 0);
+                        } else {
+                            heightWaterTankEditText.setText(String.valueOf(heightWaterTank));
+                        }
+                    } catch (NumberFormatException e) {
+                        heightWaterTankEditText.setText(String.valueOf(heightWaterTank));
+                    }
+                } else {
+                    heightWaterTankEditText.setText(String.valueOf(heightWaterTank));
+                }
+                return true;
+            }
+            return false;
         });
 
         resetEspButton.setOnClickListener(v -> {
@@ -172,15 +232,21 @@ public class SettingFragment extends Fragment {
                 SharedPreferences.Editor editor = sharedPreferences.edit();
                 editor.putLong(KEY_PUMP_DURATION, pumpDurationMillis);
                 editor.putLong(KEY_FIREBASE_INTERVAL, firebaseIntervalMillis);
+                editor.putInt(KEY_AUTO_PUMP, autoPump);
+                editor.putInt(KEY_HEIGHT_WATER_PUMP, heightWaterTank);
                 editor.apply();
                 
                 // Update saved values
                 savedPumpDurationMillis = pumpDurationMillis;
                 savedFirebaseIntervalMillis = firebaseIntervalMillis;
+                savedAutoPump = autoPump;
+                savedheightWaterTank = heightWaterTank;
                 
                 // Create config data map
                 Map<String, Object> configData = new HashMap<>();
                 configData.put("pumpDuration", pumpDurationMillis);
+                configData.put("autoPump", autoPump);
+                configData.put("heightWaterTank", heightWaterTank);
                 
                 // Clear existing data and set new data
                 databaseReferenceConfig.removeValue().addOnCompleteListener(task -> {
@@ -218,6 +284,14 @@ public class SettingFragment extends Fragment {
 
         return view;
     }
+
+    private void setupSwitch(@SuppressLint("UseSwitchCompatOrMaterialCode") Switch autoPumpSwitch) {
+        autoPumpSwitch.setChecked(autoPump == 1);
+    }
+
+    private void setupEditText(EditText heightWaterTankEditText) {
+        heightWaterTankEditText.setText(String.valueOf(heightWaterTank));
+    }
     
     private void setupSpinners(Spinner pumpDurationSpinner, Spinner firebaseIntervalSpinner) {
         // Set up pump duration spinner
@@ -250,7 +324,9 @@ public class SettingFragment extends Fragment {
     private void checkForChanges() {
         // Check if any settings have changed from saved values
         boolean hasChanges = pumpDurationMillis != savedPumpDurationMillis || 
-                      firebaseIntervalMillis != savedFirebaseIntervalMillis;
+                        firebaseIntervalMillis != savedFirebaseIntervalMillis ||
+                        autoPump != savedAutoPump ||
+                        heightWaterTank != savedheightWaterTank;
         
         if (hasChanges != settingsChanged) {
             settingsChanged = hasChanges;
