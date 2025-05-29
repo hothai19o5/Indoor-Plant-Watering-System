@@ -39,36 +39,53 @@ FirebaseAuth firebaseAuth;
 unsigned long lastCommandCheck = 0;      // Thời điểm kiểm tra lệnh cuối cùng
 const long commandCheckInterval = 1000;  // Kiểm tra lệnh mỗi 1 giây
 
+unsigned long lastLedCheck = 0;
+unsigned long lastUpdateData = 0;
+
 // Biến trạng thái cho máy bơm và cờ ghi đè thủ công
 bool pumpOn = false;
 bool resetOn = false;
 bool manualOverride = false;
 unsigned long pumpStartTime = 0;     // Lưu thời điểm bắt đầu bật bơm
 unsigned long pumpDuration = 10000;  // Thời gian chạy máy bơm (mặc định 10 giây)
+bool autoPump = false;
+int typeError = 0;
+
+float temperature = 0;
+float humidity = 0;
+float percentSoilMoisture = 0;
+float batteryLevel = 0;
+float tankWaterLevel = 0;
 
 float heightTankWater = 100;
 
 void configModeCallback(WiFiManager* myWiFiManager) {
-  Serial.println("Entered config mode");
+  unsigned long currentMillis = millis();
+  Serial.print(currentMillis);
+  Serial.println("    >>    Entered config mode    ");
   Serial.println(WiFi.softAPIP());
   Serial.println(myWiFiManager->getConfigPortalSSID());
 }
 
 // ---------------------------------- SETUP --------------------------------------
 void setup() {
+  unsigned long currentMillis = millis();
   Serial.begin(115200);
   Serial.println();
-  Serial.println("Booted");
+  Serial.print(currentMillis);
+  Serial.println("    >>    Booted");
 
   // Khởi tạo I2C trên D5 (SDA), D1 (SCL)
   Wire.begin(D5, D1);
 
   // Khởi động INA219
   if (!ina219.begin()) {
-    Serial.println("Không tìm thấy INA219. Kiểm tra kết nối!");
-    while (1);
+    Serial.print(currentMillis);
+    Serial.println("    >>    Cannot find INA219.");
+    typeError = 3;
   }
 
+  // Thiết lập chân Trig và Echo của HC SR04
   pinMode(TRIG_PIN, OUTPUT);
   pinMode(ECHO_PIN, INPUT);
 
@@ -76,6 +93,7 @@ void setup() {
   digitalWrite(RELAY2_PIN, LOW);  // Tắt relay 2 (máy bơm) khi khởi động
 
   pinMode(SOIL_PIN, INPUT);             // Thiết lập chân đọc độ ẩm đất là INPUT
+
   pinMode(LED_BUG, OUTPUT);   // Thiết lập chân led bug dht11 là OUTPUT
 
   //Khai báo WiFi Manager
@@ -84,13 +102,15 @@ void setup() {
   wifiManager.setAPCallback(configModeCallback);
   if (!wifiManager.autoConnect()) {
     digitalWrite(LED_BUG, HIGH);
-    Serial.println("Failed to connect and hit timeout");
+    Serial.print(currentMillis);
+    Serial.println("    >>    Failed to connect wifi and hit timeout");
     //Nếu kết nối thất bại thì reset
+    delay(1000);
     ESP.reset();
-    delay(2000);
   }
   // Thành công thì thông báo ra màn hình
-  Serial.println("Connected...");
+  Serial.print(currentMillis);
+  Serial.println("    >>    Connected...");
   digitalWrite(LED_BUG, LOW);
 
   // Cấu hình FirebaseConfig và FirebaseAuth
@@ -110,7 +130,8 @@ void setup() {
 // ------------------------------------- END SETUP ----------------------------------
 
 void tokenStatusCallback(TokenInfo info) {
-  Serial.println("Token Info: ");
+  Serial.print(millis());
+  Serial.print("    >>    Token Info: ");
   Serial.println(info.status);
 }
 
@@ -118,11 +139,13 @@ void tokenStatusCallback(TokenInfo info) {
 void loop() {
   unsigned long currentMillis = millis();
 
+  ledBug(typeError);
+
   // Kiểm tra kết nối WiFi
-  if (WiFi.status() != WL_CONNECTED) {
+  while (WiFi.status() != WL_CONNECTED) {
     digitalWrite(LED_BUG, HIGH);
-    Serial.println("WiFi connection lost. Reconnecting...");
-    ESP.reset();
+    Serial.print(currentMillis);
+    Serial.println("    >>    WiFi connection lost. Reconnecting...");
     delay(1000);
   }
 
@@ -134,67 +157,68 @@ void loop() {
 
   checkPump();  // Kiểm tra trạng thái máy bơm và tắt nếu quá thời gian
 
-  // Kiểm tra commands từ Firebase mỗi 1 giây
-  if (currentMillis - lastCommandCheck >= commandCheckInterval) {
-    lastCommandCheck = currentMillis;
-    checkCommands();
-  }
-
   timeClient.update();  // Cập nhật lại thời gian
 
-  // Đọc dữ liệu từ DHT11
-  float temperature = dht.readTemperature();  // Nhiệt độ (C)
-  float humidity = dht.readHumidity();        // Độ ẩm (%)
+  if(currentMillis - lastUpdateData >= 2000) {
+    // Đọc dữ liệu từ DHT11
+    temperature = dht.readTemperature();  // Nhiệt độ (C)
+    humidity = dht.readHumidity();        // Độ ẩm (%)
 
-  // Đọc độ ẩm đất từ cảm biến V1.2
-  int soilMoisture = analogRead(SOIL_PIN);  // (0-1036) - tỉ lệ nghịch
-  float percentSoilMoisture = 100 - map(soilMoisture, 350, 1024, 0, 100);
+    // Đọc độ ẩm đất từ cảm biến V1.2
+    int soilMoisture = analogRead(SOIL_PIN);  // (0-1036) - tỉ lệ nghịch
+    percentSoilMoisture = 100 - map(soilMoisture, 350, 1024, 0, 100);
 
-  float batteryLevel = checkLevelBattery();
+    // Lấy dữ liệu mức pin
+    batteryLevel = checkLevelBattery();
 
-  float tankWaterLevel = checkLevelWater();
+    // Lấy dữ liệu mức nước
+    tankWaterLevel = checkLevelWater();
 
-  // Kiểm tra nếu cảm biến lỗi
-  if (isnan(temperature) || isnan(humidity)) {
-    digitalWrite(LED_BUG, HIGH);  // Bật led debug
-    delay(60000);
-    return;
-  } else if (soilMoisture <= 20 || soilMoisture >= 1023) {
-    digitalWrite(LED_BUG, HIGH);  // Bật led debug
-    delay(60000);
-    return;
+    // Kiểm tra nếu cảm biến lỗi
+    if (isnan(temperature) || isnan(humidity)) {
+      typeError = 1;
+      return;
+    } else if (soilMoisture <= 20 || soilMoisture >= 1023) {
+      typeError = 2;
+      return;
+    }
+
+    digitalWrite(LED_BUG, LOW);     // Tắt LED debug
+
+    // Gửi dữ liệu lên Firebase
+    sendDataToFirebase(temperature, humidity, percentSoilMoisture, batteryLevel, tankWaterLevel);  //Gửi dữ liệu lên Firebase
+    
+    Serial.print(currentMillis);
+    Serial.println("    >>    Send data to Firebase");
+    Serial.println(".............................................................");
   }
-
-  digitalWrite(LED_BUG, LOW);     // Tắt LED debug
 
   // Logic điều khiển tưới nước tự động
   int hour = timeClient.getHours();
-  if (!manualOverride && (hour == 6 || hour == 18) && soilMoisture >= 800 && temperature <= 40) {
+  if (!manualOverride && (hour == 6 || hour == 18) && percentSoilMoisture <= 50 && temperature <= 40 && autoPump) {
     turnOnPump();
   }
-
-  // Gửi dữ liệu lên Firebase
-  sendDataToFirebase(temperature, humidity, percentSoilMoisture, batteryLevel, tankWaterLevel);  //Gửi dữ liệu lên Firebase
-
-  Serial.println("-----------------------------");
-  delay(2000);  // Đọc dữ liệu mỗi 2 giây
 }
 // ----------------------------------- END LOOP ---------------------------------------
 
 // ---------------------------------- CHECK COMMAND -----------------------------------
 void checkCommands() {
+  unsigned long currentMillis = millis();
   if (!Firebase.getJSON(cmdData, "/commands")) {
-    Serial.print("Failed to get command: ");
+    Serial.print(currentMillis);
+    Serial.print("    >>    Failed to get command: ");
     Serial.println(cmdData.errorReason());
     return;
   }
 
   if (!cmdData.dataAvailable()) {
-    Serial.println("No command available.");
+    Serial.print(currentMillis);
+    Serial.println("    >>    No command available.");
     return;
   }
 
-  Serial.print("Received JSON: ");
+  Serial.print(currentMillis);
+  Serial.print("    >>    Received JSON: ");
   Serial.println(cmdData.jsonString());
 
   FirebaseJson* json = cmdData.jsonObjectPtr();
@@ -211,12 +235,14 @@ void checkCommands() {
   json->get(jsonData, key + "/type");
 
   if (!jsonData.success) {
-    Serial.println("Failed to get command type.");
+    Serial.print(currentMillis);
+    Serial.println("    >>    Failed to get command type.");
     return;
   }
 
   String commandType = jsonData.stringValue;
-  Serial.print("Processing command: ");
+  Serial.print(currentMillis);
+  Serial.print("    >>    Processing command: ");
   Serial.println(commandType);
 
   if (commandType == "TURN_ON_PUMP") {
@@ -225,15 +251,18 @@ void checkCommands() {
     pumpOn = false;
     manualOverride = true;
     digitalWrite(RELAY2_PIN, LOW);
-    Serial.println("Pump turned OFF by app command");
+    Serial.print(currentMillis);
+    Serial.println("    >>    Pump turned OFF by app command");
   } else if (commandType == "RESET") {
-    Serial.println("System reset by app command");
+    Serial.print(currentMillis);
+    Serial.println("    >>    System reset by app command");
     resetOn = true;
   }
 
   // Xoá command
   if (!Firebase.deleteNode(cmdData, commandPath)) {
-    Serial.print("Failed to delete command: ");
+    Serial.print(currentMillis);
+    Serial.print("    >>    Failed to delete command: ");
     Serial.println(cmdData.errorReason());
   }
 
@@ -246,15 +275,47 @@ void checkCommands() {
 
 // ---------------- CHECK CONFIG ---------------------
 void checkConfig() {
+  unsigned long currentMillis = millis();
+
   if (!Firebase.getInt(cmdData, "/config/pumpDuration")) {
-    Serial.print("Failed to get pumpDuration: ");
+    Serial.print(currentMillis);
+    Serial.print("    >>    Failed to get pumpDuration: ");
     Serial.println(cmdData.errorReason());
     return;
   }
 
   pumpDuration = cmdData.intData();
-  Serial.print("Updated pumpDuration: ");
+  Serial.print(currentMillis);
+  Serial.print("    >>    Updated pumpDuration: ");
   Serial.println(pumpDuration);
+
+  if (!Firebase.getInt(cmdData, "/config/autoPump")) {
+    Serial.print(currentMillis);
+    Serial.print("    >>    Failed to get Auto Pump: ");
+    Serial.println(cmdData.errorReason());
+    return;
+  }
+
+  autoPump = cmdData.intData() == 1 ? true : false;
+  Serial.print(currentMillis);
+  Serial.print("    >>    Auto Pump: ");
+  if(autoPump == 0) {
+    Serial.println("False");
+  } else {
+    Serial.println("True");
+  }
+
+  if (!Firebase.getInt(cmdData, "/config/heightWaterTank")) {
+    Serial.print(currentMillis);
+    Serial.print("    >>    Failed to get height water tank: ");
+    Serial.println(cmdData.errorReason());
+    return;
+  }  
+
+  heightTankWater = cmdData.intData();
+  Serial.print(currentMillis);
+  Serial.print("    >>    Height Water Tank: ");
+  Serial.println(heightTankWater);
 }
 // --------------------------- END CHECK CONFIG -----------------------------
 
@@ -265,7 +326,8 @@ void turnOnPump() {
     manualOverride = true;
     digitalWrite(RELAY2_PIN, HIGH);
     pumpStartTime = millis();  // Ghi lại thời gian bật bơm
-    Serial.println("Pump turned ON");
+    Serial.print(pumpStartTime);
+    Serial.println("    >>    Pump turned ON");
   }
 }
 // ------------------------------ END TURN ON PUMP ----------------------------
@@ -275,7 +337,8 @@ void checkPump() {
   if (pumpOn && millis() - pumpStartTime >= pumpDuration) {
     pumpOn = false;
     digitalWrite(RELAY2_PIN, LOW);
-    Serial.printf("Pump turned OFF automatically after %lu s\n", pumpDuration);
+    Serial.print(millis());
+    Serial.printf("    >>    Pump turned OFF automatically after %lu s\n", pumpDuration);
   }
 }
 // ------------------------------ END CHECK PUMP -----------------------------
@@ -291,22 +354,29 @@ void sendDataToFirebase(float temperature, float humidity, float soilMoisture, f
   json.set("tankWaterLevel", tankWaterLevel);
   unsigned long timestamp = timeClient.getEpochTime();
 
+  unsigned long currentMillis = millis();
+
   // Gửi lên Firebase
   int mod = timestamp % 1800;
   // 30 phút gửi 1 lần, để thống kê dài ngày
   if (mod < 5) {
     json.set("timestamp", timestamp - mod);
     if (!Firebase.push(firebaseData, "/sensor_data_30min", json)) {
-      Serial.println("Failed to send data to Firebase /sensor_data_30min");
-      Serial.println("REASON: " + firebaseData.errorReason());
+      Serial.print(currentMillis);
+      Serial.println("    >>    Failed to send data to Firebase /sensor_data_30min");
+      Serial.print(currentMillis);
+      Serial.println("    >>    REASON: " + firebaseData.errorReason());
     }
     delay(3000);  // Tránh gửi 2 lần dữ liệu với 1 timestamp
   }
+  currentMillis = millis();
   // 3-4s gửi 1 lần, xem trực tiếp
   json.set("timestamp", timestamp);
   if (!Firebase.push(firebaseData, "/sensor_data", json)) {
-    Serial.println("Failed to send data to Firebase /sensor_data");
-    Serial.println("REASON: " + firebaseData.errorReason());
+    Serial.print(currentMillis);
+    Serial.println("    >>    Failed to send data to Firebase /sensor_data");
+    Serial.print(currentMillis);
+    Serial.println("    >>    REASON: " + firebaseData.errorReason());
   }
 }
 
@@ -326,12 +396,14 @@ float checkLevelWater() {
 
   // Tính khoảng cách (đơn vị cm)
   distance = duration * 0.034 / 2;
-  Serial.print("Distance: ");
-  Serial.println(distance);
+  // Serial.print("Distance: ");
+  // Serial.println(distance);
 
   float level = distance * 100 / heightTankWater;
 
-  Serial.print("Level Tank Water: ");
+  unsigned long currentMillis = millis();
+  Serial.print(currentMillis);
+  Serial.print("    >>    Level Tank Water: ");
   Serial.println(level);
 
   return level;
@@ -342,14 +414,56 @@ float checkLevelBattery() {
   float shuntVoltage = ina219.getShuntVoltage_mV() / 1000.0; // mV -> V
   float loadVoltage = busVoltage + shuntVoltage;  // Tổng điện áp thực tế
   
-  Serial.print("Điện áp pin: ");
-  Serial.print(loadVoltage);
-  Serial.println(" V");
+  // Serial.print("Điện áp pin: ");
+  // Serial.print(loadVoltage);
+  // Serial.println(" V");
 
   float percent = (loadVoltage - 9) / (12.6 - 9) * 100.0;
   percent = constrain(percent, 0, 100);
-  Serial.print("Dung lượng ước tính: ");
+  unsigned long currentMillis = millis();
+  Serial.print(currentMillis);
+  Serial.print("    >>    Current Level Battery: ");
   Serial.print(percent);
   Serial.println(" %");
   return percent;
+}
+
+void ledBug(int type) {
+  unsigned long currentMillis = millis();
+  if (type == 1) {  // DHT
+    if(currentMillis - lastLedCheck >= 500) {
+      lastLedCheck = currentMillis;
+      digitalWrite(LED_BUG, HIGH);
+    }
+    digitalWrite(LED_BUG, LOW);
+  } else if (type == 2) { // Soil Moisture
+    if(currentMillis - lastLedCheck >= 1000) {
+      lastLedCheck = currentMillis;
+      digitalWrite(LED_BUG, HIGH);
+    }
+    digitalWrite(LED_BUG, LOW);
+  } else if (type == 3) { // INA219
+    if(currentMillis - lastLedCheck >= 2000) {
+      lastLedCheck = currentMillis;
+      digitalWrite(LED_BUG, HIGH);
+    }
+    digitalWrite(LED_BUG, LOW);
+  } else if (type == 4) { // HC SR04
+    if(currentMillis - lastLedCheck >= 4000) {
+      lastLedCheck = currentMillis;
+      digitalWrite(LED_BUG, HIGH);
+    }
+    digitalWrite(LED_BUG, LOW);
+  } else if (type == 5) { // Connect Wifi
+    lastLedCheck = currentMillis;
+    digitalWrite(LED_BUG, HIGH);
+  } else if (type == 6) { // Connect Firebase
+    if(currentMillis - lastLedCheck >= 250) {
+      lastLedCheck = currentMillis;
+      digitalWrite(LED_BUG, HIGH);
+    }
+    digitalWrite(LED_BUG, LOW);
+  } else {
+    digitalWrite(LED_BUG, LOW);
+  }
 }
