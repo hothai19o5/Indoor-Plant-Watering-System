@@ -21,13 +21,15 @@ This project is a smart **Indoor Plant Watering System** that monitors and contr
     - Automatic watering mode
     - Firebase real-time database integration
     - Data statistics
-    - Add hardware device ( Updating... )
+    - Change Pump Duration
+    - Change Height Water Tank
 - Hardware:
     - ESP8266/ESP32 + DHT11 + soil moisture sensor V1.2
     - INA219 for monitoring battery level
     - Ultrasonic Distance Sensor HC-SR04
     - Supports both 12V power adapter and 12V battery pack
     - Sends sensor data every 5 seconds to Firebase
+    - Send Notification to App if Auto Pump or Error Sensor or Low Battery
 - Cloud Function:
     - Send notification from ESP to App
 
@@ -54,8 +56,19 @@ This project is a smart **Indoor Plant Watering System** that monitors and contr
 2. Set up Cloud Function to summarize data (found in `/cloud_functions` folder).
 3. Update ESP firmware and Android app with database URL and API keys.
 
+## Hardware
+
+I will update video later <3
+
 ## Android App
 
-https://github.com/user-attachments/assets/d69c6ba5-8ea3-4579-9f76-19d351b79d76
+https://github.com/user-attachments/assets/75760552-f5a5-4cc4-a8c6-85efd7374c9e
+
+## Hardware diagram
+
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/e3222fae-8ff2-4b44-9eb6-628ee79bf657" alt="Hardware diagram" width="90%">
+</p>
+
 
 
