@@ -31,6 +31,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.messaging.FirebaseMessaging;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -116,6 +117,20 @@ public class MainActivity extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
+
+        FirebaseMessaging.getInstance().getToken()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        String token = task.getResult();
+                        Log.d("FCM", "Token lấy thủ công: " + token);
+
+                        // Lưu token vào Firebase
+                        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("fcmToken");
+                        ref.setValue(token)
+                                .addOnSuccessListener(aVoid -> Log.d("FCM", "Token đã lưu thành công"))
+                                .addOnFailureListener(e -> Log.e("FCM", "Lỗi khi lưu token", e));
+                    }
+                });
     }
 
     public interface DataUpdateListener {
