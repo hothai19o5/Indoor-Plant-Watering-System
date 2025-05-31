@@ -58,7 +58,7 @@ This project is a smart **Indoor Plant Watering System** that monitors and contr
 
 ## Hardware
 
-I will update video later <3
+https://github.com/user-attachments/assets/b19b17c1-4aba-45e8-9089-8fadac99c43f
 
 ## Android App
 
