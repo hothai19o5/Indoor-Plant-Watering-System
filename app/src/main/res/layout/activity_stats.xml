@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -43,7 +44,8 @@
         android:layout_gravity="center"
         android:layout_weight="1"
         android:text="No chart data available"
-        android:visibility="gone"/>
+        android:visibility="gone"
+        tools:ignore="HardcodedText" />
 
     <!-- Thông tin thống kê (ẩn ban đầu) -->
     <androidx.cardview.widget.CardView
@@ -86,7 +88,8 @@
                         android:text="--"
                         android:textSize="16sp"
                         android:textStyle="bold"
-                        android:textColor="#FF0000"/>
+                        android:textColor="#FF0000"
+                        tools:ignore="HardcodedText" />
                 </LinearLayout>
 
                 <LinearLayout
@@ -109,7 +112,8 @@
                         android:text="--"
                         android:textSize="16sp"
                         android:textStyle="bold"
-                        android:textColor="#0000FF"/>
+                        android:textColor="#0000FF"
+                        tools:ignore="HardcodedText" />
                 </LinearLayout>
 
                 <LinearLayout
@@ -132,7 +136,8 @@
                         android:text="--"
                         android:textSize="16sp"
                         android:textStyle="bold"
-                        android:textColor="#008800"/>
+                        android:textColor="#008800"
+                        tools:ignore="HardcodedText" />
                 </LinearLayout>
             </LinearLayout>
         </LinearLayout>

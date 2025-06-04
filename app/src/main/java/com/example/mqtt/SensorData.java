@@ -2,8 +2,6 @@ package com.example.mqtt;
 
 import androidx.annotation.NonNull;
 
-import java.util.Date;
-
 public class SensorData {
     private long timestamp;
     private float temperature;
@@ -22,10 +20,6 @@ public class SensorData {
 
     public void setTimestamp(long timestamp) {
         this.timestamp = timestamp;
-    }
-    
-    public Date getDate() {
-        return new Date(timestamp);
     }
 
     public float getTemperature() {
@@ -68,6 +62,7 @@ public class SensorData {
         this.tankWaterLevel = tankWaterLevel;
     }
 
+    @NonNull
     @Override
     public String toString() {
         return "SensorData{" +

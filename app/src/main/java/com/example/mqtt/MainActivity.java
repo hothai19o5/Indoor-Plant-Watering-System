@@ -143,11 +143,7 @@ public class MainActivity extends AppCompatActivity {
             Log.d("MainActivity", "Data callback received: " + (sensorData != null ? "data exists" : "no data"));
             // Không cập nhật UI trực tiếp ở đây nữa
             // Thay vào đó, thông báo cho fragment hiện tại
-            if (currentFragment instanceof DataUpdateListener) {
-                runOnUiThread(() -> {
-                    ((DataUpdateListener)currentFragment).onDataUpdate(sensorData);
-                });
-            }
+            if (currentFragment instanceof DataUpdateListener) runOnUiThread(() -> ((DataUpdateListener) currentFragment).onDataUpdate(sensorData));
         });
     }
 

@@ -14,8 +14,8 @@
         android:layout_width="120dp"
         android:layout_height="120dp"
         android:layout_marginBottom="32dp"
-        android:src="@drawable/baseline_account_circle_24"
-        />
+        android:src="@drawable/plant"
+        tools:ignore="ContentDescription" />
 
     <EditText
         android:id="@+id/username"
@@ -25,17 +25,54 @@
         android:inputType="textEmailAddress"
         android:padding="12dp"
         android:layout_marginBottom="8dp"
-        android:background="@drawable/custom_edittext" />
+        android:textColor="@color/black"
+        android:background="@drawable/custom_edittext"
+        tools:ignore="Autofill,HardcodedText" />
 
-    <EditText
-        android:id="@+id/password"
+<!--    <EditText-->
+<!--        android:id="@+id/password"-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:hint="Password"-->
+<!--        android:inputType="textPassword"-->
+<!--        android:padding="12dp"-->
+<!--        android:layout_marginBottom="16dp"-->
+<!--        android:textColor="@color/black"-->
+<!--        android:background="@drawable/custom_edittext"-->
+<!--        tools:ignore="Autofill,HardcodedText" />-->
+
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Password"
-        android:inputType="textPassword"
-        android:padding="12dp"
-        android:layout_marginBottom="16dp"
-        android:background="@drawable/custom_edittext" />
+        tools:ignore="ExtraText">
+
+        <EditText
+            android:id="@+id/password"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Password"
+            android:inputType="textPassword"
+            android:padding="12dp"
+            android:layout_marginBottom="16dp"
+            android:textColor="@color/black"
+            android:background="@drawable/custom_edittext"
+            android:layout_alignParentStart="true"
+            android:layout_alignParentEnd="true"
+            tools:ignore="HardcodedText"/>
+
+        <ImageView
+            android:id="@+id/togglePasswordVisibility"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_alignBottom="@id/password"
+            android:layout_alignParentEnd="true"
+            android:layout_marginEnd="16dp"
+            android:layout_marginBottom="6dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:src="@drawable/baseline_visibility_off_24"
+            tools:ignore="ContentDescription" />
+    </RelativeLayout>
 
     <Button
         android:id="@+id/login"
@@ -46,7 +83,8 @@
         android:textSize="20sp"
         android:padding="12dp"
         android:backgroundTint="@color/lavender"
-        android:layout_marginBottom="24dp" />
+        android:layout_marginBottom="24dp"
+        tools:ignore="HardcodedText" />
 
     <!-- Gạch ngang với chữ OR -->
     <LinearLayout
@@ -67,7 +105,8 @@
             android:layout_height="wrap_content"
             android:text="OR"
             android:padding="8dp"
-            android:textSize="14sp" />
+            android:textSize="14sp"
+            tools:ignore="HardcodedText" />
             
         <View
             android:layout_width="0dp"
@@ -76,10 +115,14 @@
             android:background="#CCCCCC" />
     </LinearLayout>
 
-    <!-- Nút đăng nhập Google -->
-    <com.google.android.gms.common.SignInButton
-        android:id="@+id/google_sign_in_button"
+    <Button
+        android:id="@+id/forgot_password"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content"
+        android:text="Forgot Password?"
+        android:textColor="@color/black"
+        android:backgroundTint="@color/lavender"
+        android:textSize="16sp"
+        tools:ignore="HardcodedText" />
 
 </LinearLayout>

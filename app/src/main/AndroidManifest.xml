@@ -32,6 +32,8 @@
             android:name=".LoginActivity"
             android:exported="false">
         </activity>
+        <activity android:name=".ForgotPasswordActivity" >
+        </activity>
         <!-- FCM Service -->
         <service
             android:name=".MyFirebaseMessagingService"

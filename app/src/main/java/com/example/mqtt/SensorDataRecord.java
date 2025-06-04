@@ -1,7 +1,5 @@
 package com.example.mqtt;
 
-import java.util.Date;
-
 public class SensorDataRecord {
     private long timestamp;
     private float temperature;
@@ -41,9 +39,5 @@ public class SensorDataRecord {
 
     public void setSoilMoisture(float soilMoisture) {
         this.soilMoisture = soilMoisture;
-    }
-
-    public Date getDate() {
-        return new Date(timestamp);
     }
 }

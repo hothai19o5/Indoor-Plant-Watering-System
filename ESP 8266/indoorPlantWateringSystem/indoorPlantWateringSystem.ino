@@ -340,7 +340,7 @@ void checkCommands()
   else if (commandType == "TURN_OFF_PUMP")
   {
     pumpOn = false;
-    manualOverride = true;
+    manualOverride = false;
     digitalWrite(RELAY2_PIN, LOW);
     Serial.print(currentMillis);
     Serial.println("    >>    Pump turned OFF by app command");

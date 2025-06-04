@@ -44,7 +44,7 @@ public class HumidityFragment extends Fragment implements MainActivity.DataUpdat
     private TextView minValueTextView;
     private TextView avgValueTextView;
     private FirebaseDataHelper firebaseDataHelper;
-    private List<Entry> entries = new ArrayList<>();
+    private final List<Entry> entries = new ArrayList<>();
     private long startTime = System.currentTimeMillis();
     private LineDataSet dataSet;
     private final Context context;
@@ -277,7 +277,7 @@ public class HumidityFragment extends Fragment implements MainActivity.DataUpdat
             getActivity().runOnUiThread(() -> {
                 // Thêm điểm mới vào biểu đồ (nếu đã có dữ liệu lịch sử)
                 if (!entries.isEmpty()) {
-                    float humidityValue = (float)sensorData.getHumidity();
+                    float humidityValue = sensorData.getHumidity();
                     float x = (sensorData.getTimestamp()*1000 -startTime) / 1000f;
 
                     // Tạo entry mới

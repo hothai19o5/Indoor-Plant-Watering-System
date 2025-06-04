@@ -274,7 +274,7 @@ public class SettingFragment extends Fragment {
                     } else {
                         new AlertDialog.Builder(requireContext())
                             .setTitle("Error")
-                            .setMessage("Failed to clear previous config: " + task.getException().getMessage())
+                            .setMessage("Failed to clear previous config: " + Objects.requireNonNull(task.getException()).getMessage())
                             .setPositiveButton("OK", null)
                             .show();
                     }
